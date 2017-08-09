@@ -1,0 +1,26 @@
+{
+  "name": "data-collection-poc",
+  "version": "1.0.0",
+  "description": "A POC for capturing screenshots of Google Maps which will be then used for extraction of traffic data",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "start": "node .",
+    "start-maps": "http-server -p 9000"
+  },
+  "keywords": [
+    "node",
+    "Google",
+    "Maps",
+    "API",
+    "screenshot",
+    "traffic",
+    "data"
+  ],
+  "author": "Pavan Chhatpar",
+  "license": "ISC",
+  "dependencies": {
+    "http-server": "^0.10.0",
+    "pageres": "^4.5.1"
+  }
+}
