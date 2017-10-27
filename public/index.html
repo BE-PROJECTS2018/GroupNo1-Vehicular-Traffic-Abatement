@@ -17,22 +17,58 @@
         padding: 0;
       }
     </style>
+    <script src="jquery.min.js"></script>
   </head>
   <body>
     <div id="map"></div>
     <script>
+      var map;
       function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
+        map = new google.maps.Map(document.getElementById('map'), {
           zoom: 13,
-          center: {lat: 34.04924594193164, lng: -118.24104309082031}
+          center: {lat: 34.04924594193164, lng: -118.24104309082031},
+          disableDefaultUI: true
         });
 
         var trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map);
       }
     </script>
-    <script async defer
+    <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCXJ7u2WuQDPBemTl6SAU1xhOUJ9PUhSkw&callback=initMap">
+    </script>
+    <script>
+      function getUrlParams() {
+        var match,
+            pl     = /\+/g,  // Regex for replacing addition symbol with a space
+            search = /([^&=]+)=?([^&]*)/g,
+            decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+            query  = window.location.search.substring(1);
+
+        urlParams = {};
+        while (match = search.exec(query))
+          urlParams[decode(match[1])] = decode(match[2]);
+        return urlParams;
+      }
+      $(document).ready(function() {
+        var params;
+        setTimeout(function() {
+          $("a[title='Click to see this area on Google Maps']").parent().css('display','none');
+          $('.gmnoprint').css('display', 'none');
+          $('.gm-style-cc').css('display','none');
+          if(params.zoom != undefined) {
+            map.setZoom(Number(params.zoom));
+          }
+        }, 3000);
+        params = getUrlParams();
+        if(params.north != undefined && params.east != undefined && params.south != undefined && params.west != undefined) {
+          var sw = new google.maps.LatLng({lat: Number(params.south), lng: Number(params.west)});
+          var ne = new google.maps.LatLng({lat: Number(params.north), lng: Number(params.east)});
+          var latlngbnds = new google.maps.LatLngBounds(sw,ne);
+          map.fitBounds(latlngbnds);
+        }
+        
+      });
     </script>
   </body>
 </html>
