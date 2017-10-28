@@ -18,6 +18,14 @@ function takeSS(n, resolve) {
     });
 }
 
+var n;
+try {
+    n = Number(process.argv.find((v)=>v.match('-n=')).substring(3));
+} catch(e) {
+    console.error("Enter a valid count as -n=<count> command line option");
+    process.exit();
+}
+
 new Promise((resolve, reject) => {
-    takeSS(2, resolve);    
+    takeSS(n, resolve);    
 }).then(()=>console.log("Taken " + count + " screenshots."))
