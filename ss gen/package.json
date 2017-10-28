@@ -1,5 +1,5 @@
 {
-  "name": "data-collection-poc",
+  "name": "ss-gen",
   "version": "1.0.0",
   "description": "A POC for capturing screenshots of Google Maps which will be then used for extraction of traffic data",
   "main": "index.js",

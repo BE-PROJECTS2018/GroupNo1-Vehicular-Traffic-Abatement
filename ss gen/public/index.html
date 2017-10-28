@@ -23,13 +23,54 @@
     <div id="map"></div>
     <script>
       var map;
+      var myStyle = [
+        {elementType: 'geometry', stylers: [{color: '#000000'}]},
+        {
+          featureType: "transit",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        },
+        {
+          featureType: "administrative",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        },{
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        },{
+          featureType: "water",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        },{
+          featureType: "road",
+          elementType: "labels",
+          stylers: [
+            { visibility: "off" }
+          ]
+        },
+        {
+          featureType: 'road',
+          elementType: 'geometry',
+          stylers: [{color: '#0000ff'}]
+        },
+      ];
       function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
           zoom: 13,
           center: {lat: 34.04924594193164, lng: -118.24104309082031},
-          disableDefaultUI: true
+          disableDefaultUI: true,
+          mapTypeId: 'mystyle'
         });
-
+        map.mapTypes.set('mystyle', new google.maps.StyledMapType(myStyle, { name: 'My Style' }));
         var trafficLayer = new google.maps.TrafficLayer();
         trafficLayer.setMap(map);
       }
