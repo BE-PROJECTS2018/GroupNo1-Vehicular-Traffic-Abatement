@@ -100,7 +100,7 @@
           if(params.zoom != undefined) {
             map.setZoom(Number(params.zoom));
           }
-        }, 3000);
+        }, 5000);
         params = getUrlParams();
         if(params.north != undefined && params.east != undefined && params.south != undefined && params.west != undefined) {
           var sw = new google.maps.LatLng({lat: Number(params.south), lng: Number(params.west)});

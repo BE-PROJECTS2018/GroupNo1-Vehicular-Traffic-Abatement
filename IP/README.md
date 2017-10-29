@@ -28,6 +28,6 @@ Ensure at all times that packages are installed being inside the virtual environ
 (venv) $ python main.py
 ```
 
-## Images
- - Images are stored inside `images` folder which is ignored inside `.gitignore` to never commit it to GitHub
- - Images are picked up from the `ss gen/images` folder and the same hierarchy of folders is maintained on the output side as well
+## JSON
+ - JSON dataset are stored inside `json` folder which is ignored inside `.gitignore` to never commit it to GitHub
+ - Images are picked up from the `ss gen/images` folder and the same hierarchy of folders is maintained on the output JSON files as well
