@@ -15,10 +15,15 @@ class MyEncoder(json.JSONEncoder):
 
 images = glob.glob('../ss gen/images/**/*.png')
 for image in images:
-    oppath  = image[image.find('\\')+1:]
-    opfname = oppath[oppath.find('\\')+1:]      #filename for output image
-    opfldr  = oppath[:oppath.find('\\')]        #folder name for output eg. section1
-    image   = image.replace('\\','/')           #making it compatible to open input image
+    if os.name == 'nt':
+        oppath  = image[image.find('\\')+1:]
+        opfname = oppath[oppath.find('\\')+1:]      #filename for output image
+        opfldr  = oppath[:oppath.find('\\')]        #folder name for output eg. section1
+        image   = image.replace('\\','/')           #making it compatible to open input image
+    else:
+        oppath = image.replace('../ss gen/images/', '')
+        opfname = oppath[oppath.find('/')+1:]      #filename for output image
+        opfldr  = oppath[:oppath.find('/')]        #folder name for output eg. section1
     frame   = cv2.imread(image)
     tmp     = opfname.replace('.png','')
     ind     = tmp.find('-')
