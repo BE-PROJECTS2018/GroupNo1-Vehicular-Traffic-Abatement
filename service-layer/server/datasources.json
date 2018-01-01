@@ -1,0 +1,16 @@
+{
+  "db": {
+    "name": "db",
+    "connector": "memory"
+  },
+  "vta-mongo": {
+    "host": "ds239097.mlab.com",
+    "port": 39097,
+    "url": "mongodb://vta_lb_user:vta_lb@ds239097.mlab.com:39097/vta",
+    "database": "vta",
+    "password": "vta_lb",
+    "name": "vta-mongo",
+    "user": "vta_lb_user",
+    "connector": "mongodb"
+  }
+}

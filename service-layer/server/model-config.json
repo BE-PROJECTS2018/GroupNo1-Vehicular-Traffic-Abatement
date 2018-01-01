@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "vta-mongo"
+  },
+  "AccessToken": {
+    "dataSource": "vta-mongo",
+    "public": false
+  },
+  "ACL": {
+    "dataSource": "vta-mongo",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "vta-mongo",
+    "public": false,
+    "options": {
+      "strictObjectIDCoercion": true
+    }
+  },
+  "Role": {
+    "dataSource": "vta-mongo",
+    "public": false
+  }
+}
