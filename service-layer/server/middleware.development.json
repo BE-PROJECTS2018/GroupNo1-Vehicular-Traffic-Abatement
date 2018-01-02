@@ -2,8 +2,8 @@
   "final:after": {
     "strong-error-handler": {
       "params": {
-        "debug": true,
-        "log": true
+        "debug": false,
+        "log": false
       }
     }
   }
