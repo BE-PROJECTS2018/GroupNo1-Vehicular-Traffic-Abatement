@@ -12,5 +12,11 @@
     "name": "vta-mongo",
     "user": "vta_lb_user",
     "connector": "mongodb"
+  },
+  "tensorflow-files": {
+    "name": "tensorflow-files",
+    "connector": "loopback-component-storage",
+    "provider": "filesystem",
+    "root": "./tensorflow-exports"
   }
 }

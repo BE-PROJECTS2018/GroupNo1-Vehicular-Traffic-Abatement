@@ -50,6 +50,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         // Set up volley
+        
         service = VolleyService()
         apiController = APIController(service)
         // Set up the login form.

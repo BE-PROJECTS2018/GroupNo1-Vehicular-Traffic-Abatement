@@ -34,5 +34,9 @@
   "Role": {
     "dataSource": "vta-mongo",
     "public": false
+  },
+  "TensorFlowExport": {
+    "dataSource": "tensorflow-files",
+    "public": true
   }
 }

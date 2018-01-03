@@ -1,12 +1,13 @@
 {
-  "name": "ss-gen",
+  "name": "vta-ss-gen",
   "version": "1.0.0",
   "description": "A POC for capturing screenshots of Google Maps which will be then used for extraction of traffic data",
   "main": "index.js",
   "scripts": {
-    "test": "test",
-    "start": "node .",
-    "start-maps": "http-server -p 9000"
+    "maps": "http-server -p 9000 -s",
+    "ss": "node .",
+    "start": "npm run maps & npm run ss -- -n=2688",
+    "test": "test"
   },
   "keywords": [
     "node",
