@@ -16,7 +16,9 @@ function takeSS(n, resolve) {
         if(n == 0) {
             resolve();
         } else {
-            setTimeout(takeSS(n, resolve), timeout*60*1000);
+            setTimeout(() => {
+                takeSS(n, resolve)
+            }, timeout*60*1000);
         }
     });
 }
@@ -33,4 +35,4 @@ setTimeout(() => {
     new Promise((resolve, reject) => {
         takeSS(n, resolve)  
     }).then(()=>console.log("Taken " + count + " screenshots."));
-}, 20*1000);
+}, 10*1000);
