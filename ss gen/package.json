@@ -6,7 +6,7 @@
   "scripts": {
     "maps": "http-server -p 9000 -s",
     "ss": "node .",
-    "start": "npm run maps & npm run ss -- -n=2688",
+    "start": "npm run maps & npm run ss -- -n=2471",
     "test": "test"
   },
   "keywords": [

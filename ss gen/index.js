@@ -7,7 +7,7 @@ function takeSS(n, resolve) {
     const fname = d.getDay() + "-" + d.getHours() + "-" + d.getMinutes();
     const pageres = new Pageres({delay: 10})
     //NE (19.06398378548459, 72.92025113769535), SW (19.039645023697126, 72.88591886230472)
-    .src('localhost:9000?north=19.062605&east=72.920251&south=19.041024&west=72.885919&zoom=15', ['800x600'], {crop: true, filename: fname})
+    .src('localhost:9000?north=19.062605&east=72.920251&south=19.041024&west=72.885919&zoom=15', ['800x600'], {crop: true, filename: '<%= date %> '+fname})
     .dest("images/section1")
     .run()
     .then(() => {
