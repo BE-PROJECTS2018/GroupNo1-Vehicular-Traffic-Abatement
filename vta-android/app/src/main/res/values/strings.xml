@@ -16,7 +16,15 @@
     <string name="action_sign_up">Sign Up</string>
     <string name="title_activity_sign_up">Sign Up Form</string>
     <string name="prompt_confirm_password">Confirm Password</string>
+
     <string name="error_mismatch_password">Passwords don\'t match</string>
     <string name="user_created">User created, go ahead and login</string>
     <string name="err_user_exists">User exists already</string>
+
+    <string name="title_activity_maps">Home</string>
+    <string name="location_rationale">Location permission is needed to show your current location on the map.</string>
+
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyCXJ7u2WuQDPBemTl6SAU1xhOUJ9PUhSkw</string>
+    <string name="to_location">Destination</string>
+    <string name="from_location">Source</string>
 </resources>

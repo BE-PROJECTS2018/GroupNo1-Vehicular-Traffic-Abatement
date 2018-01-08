@@ -173,10 +173,9 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             // perform the user login attempt.
             showProgress(true)
             val params = JSONObject()
-            val path = "Users/login"
             params.put("email", emailStr)
             params.put("password", passwordStr)
-            apiController.post(path, params) {response ->
+            apiController.login(params) {response ->
                 isLoggingIn = false
                 showProgress(false)
                 if(response == null) {

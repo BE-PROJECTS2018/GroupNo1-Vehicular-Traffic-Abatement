@@ -186,10 +186,9 @@ class SignUpActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             showProgress(true)
             isCreating = true
             val params = JSONObject()
-            val path = "Users"
             params.put("email", emailStr)
             params.put("password", passwordStr)
-            apiController.post(path, params) {response ->
+            apiController.signup(params) {response ->
                 isCreating = false
                 showProgress(false)
                 val msg = if(response != null) {
