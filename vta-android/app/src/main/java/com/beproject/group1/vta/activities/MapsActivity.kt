@@ -103,7 +103,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 for(location: Location in locationResult!!.locations) {
                     Log.d("LOC RESULT", "Got one")
                     mylocation = location
-                    fromLocation.setText(mylocation!!.toString())
+                    //fromLocation.setText(mylocation!!.toString())
                     if(!locInit)
                         initMarker()
                     locCircle.radius = mylocation!!.accuracy.toDouble()
@@ -118,7 +118,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     .addOnSuccessListener { loc ->
                         if(loc != null) {
                             mylocation = loc
-                            fromLocation.setText(mylocation!!.toString())
+                            //fromLocation.setText(mylocation!!.toString())
                             if(!locInit) {
                                 initMarker()
                             }
@@ -358,7 +358,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                             .addOnSuccessListener { loc ->
                                 if(loc != null) {
                                     mylocation = loc
-                                    fromLocation.setText(mylocation!!.toString())
+                                    //fromLocation.setText(mylocation!!.toString())
                                     initMarker()
                                 }
                             }
