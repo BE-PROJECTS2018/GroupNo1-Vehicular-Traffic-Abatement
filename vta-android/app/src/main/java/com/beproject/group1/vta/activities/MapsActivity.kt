@@ -284,7 +284,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
      */
     override fun onMapReady(googleMap: GoogleMap) {
         gmap = googleMap
-
         try {
             gmap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.ub__map_style))
         } catch (e: Resources.NotFoundException) {
@@ -361,6 +360,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             override fun onResult(result: DirectionsResult?) {
                 runOnUiThread {
                     addPolyline(result!!, gmap)
+                    gmap.setPadding(0,map_bar_layout.height + 60,0,0)
                     positionCamera(result.routes[0], gmap)
                 }
 
