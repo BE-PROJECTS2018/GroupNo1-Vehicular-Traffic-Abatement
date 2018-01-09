@@ -12,16 +12,33 @@
         android:layout_marginRight="@dimen/location_bar_margin_side"
         android:layout_marginTop="@dimen/location_bar_margin"
         android:layout_height="wrap_content">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageButton
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:padding="14dp"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:background="@android:color/white"
+                android:id="@+id/source_my_location"
+                android:layout_width="wrap_content"
+                android:src="@mipmap/ic_location_selector"
+                android:layout_height="wrap_content" />
             <fragment
+                android:layout_toLeftOf="@id/source_my_location"
+                android:layout_toStartOf="@id/source_my_location"
                 android:id="@+id/from_location"
                 android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
             <fragment
+                android:layout_below="@id/from_location"
                 android:id="@+id/to_location"
                 android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
+        </RelativeLayout>
     </android.support.design.widget.AppBarLayout>
     <fragment
         android:id="@+id/map"
@@ -35,8 +52,8 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:id="@+id/my_location"
-        app:srcCompat="@drawable/ic_my_location_white_24dp"
-        app:backgroundTint="@color/colorPrimary"
+        app:srcCompat="@mipmap/ic_location_selector"
+        app:backgroundTint="@android:color/white"
         app:pressedTranslationZ="12dp"
         />
 </android.support.design.widget.CoordinatorLayout>
