@@ -63,8 +63,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var locCallback: LocationCallback
     private lateinit var mLocationRequest: LocationRequest
     private lateinit var sensorManager: SensorManager
-    private lateinit var accelerometer: Sensor
-    private lateinit var magneticField: Sensor
+    private var accelerometer: Sensor? = null
+    private var magneticField: Sensor? = null
     private lateinit var valuesAccelerometer: FloatArray
     private lateinit var valuesMagneticField: FloatArray
 
