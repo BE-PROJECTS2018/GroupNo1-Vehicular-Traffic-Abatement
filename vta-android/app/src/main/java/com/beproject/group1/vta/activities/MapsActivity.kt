@@ -27,6 +27,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import android.os.SystemClock
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
@@ -35,6 +36,14 @@ import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
+import com.google.maps.DirectionsApi
+import com.google.maps.GeoApiContext
+import com.google.maps.android.PolyUtil
+import com.google.maps.model.DirectionsResult
+import com.google.maps.model.DirectionsRoute
+import com.google.maps.model.TravelMode
+import org.joda.time.DateTime
+import java.io.IOException
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListener {
@@ -63,6 +72,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var fromLocation: PlaceAutocompleteFragment
     private var toLocMarker: Marker? = null
     private var fromLocMarker: Marker? = null
+    private var route: Polyline? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -158,6 +168,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 if(toLocMarker == null) {
                     toLocMarker = gmap.addMarker(MarkerOptions()
                             .position(place!!.latLng))
+                    if(fromLocMarker != null)
+                    {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
                 } else {
                     toLocMarker!!.position = place!!.latLng
                 }
@@ -176,6 +190,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 if(fromLocMarker == null) {
                     fromLocMarker = gmap.addMarker(MarkerOptions()
                             .position(place!!.latLng))
+                    if(toLocMarker != null)
+                    {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
                 } else {
                     fromLocMarker!!.position = place!!.latLng
                 }
@@ -235,6 +253,65 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     }
 
     //map utils start
+
+    private fun getDirectionsDetails(origin: String, destination: String, mode: TravelMode): DirectionsResult? {
+        val now = DateTime()
+        try {
+            return DirectionsApi.newRequest(getGeoContext())
+                    .mode(mode)
+                    .origin(origin)
+                    .destination(destination)
+                    .departureTime(now)
+                    .await()
+        } catch (e: ApiException) {
+            e.printStackTrace()
+            Log.e("ERR", e.toString())
+            return null
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+            Log.e("ERR", e.toString())
+            return null
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.e("ERR", e.toString())
+            return null
+        }
+
+    }
+
+    private fun positionCamera(route: DirectionsRoute, mMap: GoogleMap) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(route.legs[0].startLocation.lat, route.legs[0].startLocation.lng), 12f))
+    }
+
+    private fun getGeoContext(): GeoApiContext {
+        return GeoApiContext.Builder()
+                .apiKey(getString(R.string.google_maps_key))
+                .build()
+
+    }
+
+    private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
+        val decodedPath = PolyUtil.decode(results.routes[0].overviewPolyline.encodedPath)
+        //List<com.google.maps.model.LatLng> decode = results.routes[0].overviewPolyline.decodePath();
+        if(route == null) {
+            route = mMap.addPolyline(PolylineOptions().addAll(decodedPath))
+        }
+        else {
+            route!!.points = decodedPath
+        }
+
+    }
+
+    private fun plotRoute(source: LatLng, destination: LatLng) {
+
+        val results = getDirectionsDetails(source.latitude.toString() + "," + source.longitude.toString(), destination.latitude.toString() + "," + destination.longitude.toString(), TravelMode.DRIVING)
+        if (results != null) {
+            addPolyline(results, gmap)
+            positionCamera(results.routes[0], gmap)
+        }
+
+    }
+
     private fun initMarker() {
         locInit = true
         //gmap.isMyLocationEnabled = true
