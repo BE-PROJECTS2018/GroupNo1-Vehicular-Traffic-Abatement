@@ -57,5 +57,4 @@ deploy:
     repo: pavan-08/BE-project
     tags: true
     jdk: oraclejdk8
-  api_key:
-    secure: GiN8IVo3fsolBQn/35/InynUKiSoR+e42Vee6rWnLxIVA39/wc+VeGYdGKFnTe/DsCBahRqX0zrX+A+7YGkoCRQLG4LJfyspKRaJrZRPvxn9xnMIE4fQjqbEHCKCVOUtvmrSWk5mnuiW7WLpFIXf4UM/I5A4JMATFuIxLwNdT0cyhDwVsCZgx6z6nKtOdz+J89/IXzErZi+7r0L96uhf9LIq9eDdvn4oWqm/xal+3xd/+icSen0PLZzp3ZUc+RmsVDtZE+2RazjHOlQ1O9hsuelQ8LSD9NBeNNVTMsKYZjEdflxAl9JxdJxq/qevT9yPcT9iSjigoQPnAPsGk6Lkhz68l3mWQWkGJGXAA62P+MYeBaBf8P8/CRpY4sRHA81ayvqSFGe53xZwjFrv5C5AxRE4qwVgaHYdqgCiyk0V6IBA17gybRHI1IBeKpVuZmqGrvRq6RxpB13+YjSYZHI7wgBPhuvaCQjjwIZrqufPD/tMCMWPl+SOdYanBz31zL/bw37/LXXk7gL5/zBU+nEaQjzKPdIWtAlBHYb+Ob/2oUubdbLr7kxtv2RbubEFTIFl2o5X5z8RmvUQM0O5zfcu3zHqQEz90jLiYrqjo607aak5BRs3IEVTCqFdXQyqiVPH1vrI/Vendz3dOn+XebjnhlAreEvA04ihUIftKoeYWLc=
+  api_key: $api_key
