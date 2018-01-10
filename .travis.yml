@@ -46,7 +46,9 @@ before_deploy:
   -storepass $storepass -keypass $keypass app-release-unsigned.apk vtakey
 - jarsigner -verify app-release-unsigned.apk
 - "${ANDROID_HOME}/build-tools/27.0.3/zipalign -v -p 4 app-release-unsigned.apk app-release-unsigned-aligned.apk"
-- "${ANDROID_HOME}/build-tools/27.0.3/apksigner sign --ks $HOME/vta-android/vta-keystore.jks --ks-key-alias vtakey --ks-pass pass:${storepass} --key-pass pass:${keypass} --out vta-release.apk app-release-unsigned-aligned.apk"
+- "${ANDROID_HOME}/build-tools/27.0.3/apksigner sign --ks $HOME/vta-android/vta-keystore.jks
+  --ks-key-alias vtakey --ks-pass pass:${storepass} --key-pass pass:${keypass} --out
+  vta-release.apk app-release-unsigned-aligned.apk"
 deploy:
   provider: releases
   file: vta-release.apk
@@ -56,4 +58,4 @@ deploy:
     tags: true
     jdk: oraclejdk8
   api_key:
-    secure: u1RfJK3FDtvVpfgGT9VRGlykjcvyosVXhmfDh6pGTo6lqSzB0Lp54OEpP2baNOdlM1LPOq6bu9q7AY8mwW0igOeubbDMyhUxiZK+9pby4fL9rCui0DHDsSt7PrZd/rsE/VxAMywYv1epEADfyQUr4y8ra1PJcAAu3hMf9RNfeID2PqilZP4xsaSQO39i9u5lJgs85pkmxybme9HNy+EnB2GNFeVnN2/fwpZCFCYxi5NupNxBnGtlbdJ2CzC29Dzb0//iDnON/vRTKo6Dp7QcZjG2GhQPfBOMy+Kx6OdOiFtzANTKTslz88LsFiGnnEsaoPCxMbTZW/emv3IoiGEXSSyTTyIKjWYOrYHM0jjpkP9ipsxI/MVZadpvKgwfY59VhPFbyCJ46U9MQJUThVZUZYvSgDgJurqcV+fbLF+vpPwTdXpulJ6ix1Q/+SdI7oFYCRr6HHot3D6/K9QSwI48MqAUnmQv0WXzbfVVHHN55wBtaCxNVzFz2/aX+gexszi0OZCxSNFtsWY1i+uMuoT3cRxmC9r8YpldPDUlokiJizIct1t1PWW1DRiMAc56+cOnX1j3JDz1cMbYbfvymnNPMkCYr7JBoTlAW/WHgfQfLhpAW6wPmsSZFAEo3304DegdZE5Ab4BP50kb9Sf8y5Lyd+Wg15EuwQ/1jBR/hFDWPVQ=
+    secure: GiN8IVo3fsolBQn/35/InynUKiSoR+e42Vee6rWnLxIVA39/wc+VeGYdGKFnTe/DsCBahRqX0zrX+A+7YGkoCRQLG4LJfyspKRaJrZRPvxn9xnMIE4fQjqbEHCKCVOUtvmrSWk5mnuiW7WLpFIXf4UM/I5A4JMATFuIxLwNdT0cyhDwVsCZgx6z6nKtOdz+J89/IXzErZi+7r0L96uhf9LIq9eDdvn4oWqm/xal+3xd/+icSen0PLZzp3ZUc+RmsVDtZE+2RazjHOlQ1O9hsuelQ8LSD9NBeNNVTMsKYZjEdflxAl9JxdJxq/qevT9yPcT9iSjigoQPnAPsGk6Lkhz68l3mWQWkGJGXAA62P+MYeBaBf8P8/CRpY4sRHA81ayvqSFGe53xZwjFrv5C5AxRE4qwVgaHYdqgCiyk0V6IBA17gybRHI1IBeKpVuZmqGrvRq6RxpB13+YjSYZHI7wgBPhuvaCQjjwIZrqufPD/tMCMWPl+SOdYanBz31zL/bw37/LXXk7gL5/zBU+nEaQjzKPdIWtAlBHYb+Ob/2oUubdbLr7kxtv2RbubEFTIFl2o5X5z8RmvUQM0O5zfcu3zHqQEz90jLiYrqjo607aak5BRs3IEVTCqFdXQyqiVPH1vrI/Vendz3dOn+XebjnhlAreEvA04ihUIftKoeYWLc=
