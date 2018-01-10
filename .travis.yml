@@ -29,7 +29,7 @@ android:
   - google-gdk-license-.+
 before_install:
 - openssl aes-256-cbc -K $encrypted_46668131032f_key -iv $encrypted_46668131032f_iv
-  -in vta-keystore.jks.enc -out vta-android/vta-keystore.jks -d
+  -in vta-keystore.jks.enc -out vta-keystore.jks -d
 - cd vta-android
 - mkdir "$ANDROID_HOME/licenses" || true
 - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
@@ -47,7 +47,7 @@ install:
 script:
 - "./gradlew assembleRelease"
 before_deploy:
-#- cp $TRAVIS_BUILD_DIR/.keystore $HOME/vta-android/vta-keystore.jks
+- cp $TRAVIS_BUILD_DIR/vta-keystore.jks $HOME/vta-android
 - cd app/build/outputs/apk/
 - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/vta-android/vta-keystore.jks
   -storepass $storepass -keypass $keypass app-release-unsigned.apk vtakey
