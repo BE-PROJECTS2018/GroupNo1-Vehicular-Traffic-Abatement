@@ -21,7 +21,7 @@ with open('config.json', 'r') as c:
 start = timeit.default_timer()
 count = 0
 done = 0
-vicinity = 100
+vicinity = 30
 images = glob.glob('../ss gen/images/**/*.png')
 total = len(images)
 for image in images:
@@ -54,25 +54,40 @@ for image in images:
     E = config[opfldr]['east']
     S = config[opfldr]['south']
     W = config[opfldr]['west']
-    [s1, s2] = getScales(N, E, S, W, d1=300, d2=400)
-    # resImage = np.zeros((300,400,3), dtype=np.uint8)
+    [s1, s2] = getScales(N, E, S, W, d1=600, d2=800)
+    # resImage = np.zeros((600,800,3), dtype=np.uint8)
     
     #green
     lower_limit = np.array([60,150,100])
     upper_limit = np.array([140,250,170])
     mask = cv2.inRange(frame, lower_limit, upper_limit)
     green = cv2.bitwise_and(frame, frame, mask=mask)
-    green = cv2.resize(green, (0,0), fx = 0.5, fy = 0.5)
+    # green = cv2.resize(green, (0,0), fx = 0.5, fy = 0.5)
     gind = np.where((green != (0,0,0)).any(axis=2))
-    gdata = []
-    g = 0
+    gdata = np.full((600,800), None)
     for i in range(gind[0].size):
         latI = gind[0][i]
         lngI = gind[1][i]
         [lat, lng] = scaleToGeo(latI, lngI, s1, s2, N, W)
-        crop = 0 if g <= vicinity else g-vicinity
-        if next((d for d in gdata[crop:] if vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
-            gdata.append({
+        if latI < vicinity:
+            xS = 0
+        else:
+            xS = latI - vicinity
+        if latI == 599:
+            xE = 599
+        else:
+            xE = latI + 1
+        
+        if lngI < vicinity:
+            yS = 0
+        else:
+            yS = lngI - vicinity
+        if 799 - lngI < vicinity:
+            yE = 799
+        else:
+            yE = lngI + vicinity
+        if next((d for d in gdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            gdata[latI][lngI] = {
                 'lat':lat, 
                 'lng':lng, 
                 'weekday': weekday,
@@ -80,15 +95,14 @@ for image in images:
                 'month': month, 
                 'hour': hour,
                 'min': min, 
-                't':0})
-            g += 1
+                't':0}
             count += 1
             # resImage[latI][lngI] = [80,202,132]
-            # if latI != 299:
+            # if latI != 599:
             #     resImage[latI + 1][lngI] = [80,202,132]
             # if latI != 0:
             #     resImage[latI - 1][lngI] = [80,202,132]
-            # if lngI != 399:
+            # if lngI != 799:
             #     resImage[latI][lngI + 1] = [80,202,132]
             # if lngI != 0:
             #     resImage[latI][lngI - 1] = [80,202,132]
@@ -97,17 +111,32 @@ for image in images:
     upper_limit = np.array([50,150,255])
     mask = cv2.inRange(frame, lower_limit, upper_limit)
     orange = cv2.bitwise_and(frame, frame, mask=mask)
-    orange = cv2.resize(orange, (0,0), fx = 0.5, fy = 0.5)
+    # orange = cv2.resize(orange, (0,0), fx = 0.5, fy = 0.5)
     oind = np.where((orange != (0,0,0)).any(axis=2))
-    odata = []
-    o = 0
+    odata = np.full((600,800), None)
     for i in range(oind[0].size):
         latI = oind[0][i]
         lngI = oind[1][i]
         [lat, lng] = scaleToGeo(latI, lngI, s1, s2, N, W)
-        crop = 0 if o < vicinity else o - vicinity
-        if next((d for d in odata[crop:] if vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
-            odata.append({
+        if latI < vicinity:
+            xS = 0
+        else:
+            xS = latI - vicinity
+        if latI == 599:
+            xE = 599
+        else:
+            xE = latI + 1
+        
+        if lngI < vicinity:
+            yS = 0
+        else:
+            yS = lngI - vicinity
+        if 799 - lngI < vicinity:
+            yE = 799
+        else:
+            yE = lngI + vicinity
+        if next((d for d in odata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            odata[latI][lngI] = {
                 'lat':lat, 
                 'lng':lng, 
                 'weekday': weekday,
@@ -115,15 +144,14 @@ for image in images:
                 'month': month, 
                 'hour': hour,
                 'min': min, 
-                't':1})
+                't':1}
             count += 1
-            o += 1
             # resImage[latI][lngI] = [2,125,240]
-            # if latI != 299:
+            # if latI != 599:
             #     resImage[latI + 1][lngI] = [2,125,240]
             # if latI != 0:
             #     resImage[latI - 1][lngI] = [2,125,240]
-            # if lngI != 399:
+            # if lngI != 799:
             #     resImage[latI][lngI + 1] = [2,125,240]
             # if lngI != 0:
             #     resImage[latI][lngI - 1] = [2,125,240]
@@ -132,17 +160,32 @@ for image in images:
     upper_limit = np.array([100,100,255])
     mask = cv2.inRange(frame, lower_limit, upper_limit)
     red = cv2.bitwise_and(frame, frame, mask=mask)
-    red = cv2.resize(red, (0,0), fx = 0.5, fy = 0.5)
+    # red = cv2.resize(red, (0,0), fx = 0.5, fy = 0.5)
     rind = np.where((red != (0,0,0)).any(axis=2))
-    rdata = []
-    r = 0
+    rdata = np.full((600,800), None)
     for i in range(rind[0].size):
         latI = rind[0][i]
         lngI = rind[1][i]
         [lat, lng] = scaleToGeo(latI, lngI, s1, s2, N, W)
-        crop = 0 if r < vicinity else r - vicinity
-        if next((d for d in rdata[crop:] if vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
-            rdata.append({
+        if latI < vicinity:
+            xS = 0
+        else:
+            xS = latI - vicinity
+        if latI == 599:
+            xE = 599
+        else:
+            xE = latI + 1
+        
+        if lngI < vicinity:
+            yS = 0
+        else:
+            yS = lngI - vicinity
+        if 799 - lngI < vicinity:
+            yE = 799
+        else:
+            yE = lngI + vicinity
+        if next((d for d in rdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            rdata[latI][lngI] = {
                 'lat':lat, 
                 'lng':lng, 
                 'weekday': weekday,
@@ -150,15 +193,14 @@ for image in images:
                 'month': month, 
                 'hour': hour,
                 'min': min, 
-                't':2})
+                't':2}
             count += 1
-            r += 1
             # resImage[latI][lngI] = [0,0,230]
-            # if latI != 299:
+            # if latI != 599:
             #     resImage[latI + 1][lngI] = [0,0,230]
             # if latI != 0:
             #     resImage[latI - 1][lngI] = [0,0,230]
-            # if lngI != 399:
+            # if lngI != 799:
             #     resImage[latI][lngI + 1] = [0,0,230]
             # if lngI != 0:
             #     resImage[latI][lngI - 1] = [0,0,230]
@@ -167,17 +209,32 @@ for image in images:
     upper_limit = np.array([80,80,190])
     mask = cv2.inRange(frame, lower_limit, upper_limit)
     dred = cv2.bitwise_and(frame, frame, mask=mask)
-    dred = cv2.resize(dred, (0,0), fx = 0.5, fy = 0.5)
+    # dred = cv2.resize(dred, (0,0), fx = 0.5, fy = 0.5)
     drind = np.where((dred != (0,0,0)).any(axis=2))
-    drdata = []
-    dr = 0
+    drdata = np.full((600,800), None)
     for i in range(drind[0].size):
         latI = drind[0][i]
         lngI = drind[1][i]
         [lat, lng] = scaleToGeo(latI, lngI, s1, s2, N, W)
-        crop = 0 if dr < vicinity else dr - vicinity
-        if next((d for d in drdata[crop:] if vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
-            drdata.append({
+        if latI < vicinity:
+            xS = 0
+        else:
+            xS = latI - vicinity
+        if latI == 599:
+            xE = 599
+        else:
+            xE = latI + 1
+        
+        if lngI < vicinity:
+            yS = 0
+        else:
+            yS = lngI - vicinity
+        if 799 - lngI < vicinity:
+            yE = 799
+        else:
+            yE = lngI + vicinity
+        if next((d for d in drdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            drdata[latI][lngI] = {
                 'lat':lat, 
                 'lng':lng, 
                 'weekday': weekday,
@@ -185,19 +242,19 @@ for image in images:
                 'month': month, 
                 'hour': hour,
                 'min': min, 
-                't':3})
+                't':3}
             count += 1
-            dr += 1
             # resImage[latI][lngI] = [19,19,158]
-            # if latI != 299:
+            # if latI != 599:
             #     resImage[latI + 1][lngI] = [19,19,158]
             # if latI != 0:
             #     resImage[latI - 1][lngI] = [19,19,158]
-            # if lngI != 399:
+            # if lngI != 799:
             #     resImage[latI][lngI + 1] = [19,19,158]
             # if lngI != 0:
             #     resImage[latI][lngI - 1] = [19,19,158]
-    traffic = gdata + odata + rdata + drdata
+    traffic = gdata.flatten().tolist() + odata.flatten().tolist() + rdata.flatten().tolist() + drdata.flatten().tolist()
+    traffic = [x for x in traffic if x is not None]
     # cv2.imshow(opfname, resImage)
     opfldr = os.path.join('json',opfldr)
     opfname = opfname.replace('.png', '.json')
@@ -206,7 +263,6 @@ for image in images:
     with open(os.path.join(opfldr, opfname), 'w') as f:
         json.dump(traffic, f, cls=MyEncoder)
     done += 1
-    print(count)
 
 com = done/total*100
 print('Completed [{:-<10}] {:.2f}%'.format('='*(int)(com/10),com))
