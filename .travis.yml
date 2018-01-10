@@ -1,0 +1,56 @@
+language: android
+sudo: required
+jdk: oraclejdk8
+before_cache:
+- rm -f $HOME/vta-android/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/vta-android/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+  - "$HOME/vta-android/.gradle/caches/"
+  - "$HOME/vta-android/.gradle/wrapper/"
+env:
+  global:
+  - ANDROID_API=27
+  - ANDROID_BUILD_TOOLS=27.0.3
+  - ADB_INSTALL_TIMEOUT=5
+  - secure: hmkBhlwrrwteKct5B/snNMbkUKq8mDaxR4QXoROjzMdKC09Q06x+0OXlLSSat11HYK9Dt9ccDt1p4rGbtz+t2O2Q4QKxaAme/J+b8aLWEc7cy9jJbaF6aAbtf/29kjfuOfeMcoy/xJ54Oc6p7hrd74USOIWusFB18qmKx83xdYdnSZWng1lGETBQW/gkmSdGjsqn5DJJdQFl605G/4TG7GPQj/wiiOLaJCrkNzc8NjOKAFUH7cakxUcoqLIpvsdp0oQf+Ay03orpB3smgjdBMAwACwkxaxoc9J+mCV8Q2YuX2wrEA70lC3MHaiVJxPg+KgvAsUFcP9yixypFdA/H3yZ52RV/OcHAM/1JOOgU2LbwTVBIlwdU6PF1PkTB7IsUUhGXCQx7n6uimIHldPN44j2Bs21tiEd7bbgWQl82R5T4pHXQ+QSi6wrcq4YU972v+wyQvkFpjer21TB/sxv+EMbTl/wpIPDZR2HkMtvI1MsFExMoTQaxneswOGs6ZyIy3snGvNdMN/NNuqIzfAR4FRWlQaWt+vXRDs0QVyiAp4hyLAv6obunMaMyfgzmoNBEe3jWqb/q2Ii+C5Q+YZBHj6fpu2eDFrdAM+OtsEWW47L94xiKyozMLtQJ2EYWMHn7gwHQSH+DkmUI6N8kOM3/EGb6sADL2dw+6skrWBNgXz4=
+  - secure: UxA/kg0VJm9ZAI26mAfPke8hQtFt/OnIebZe94mahqlquXJAy/KzFCGgAkuIIlhvMZEdQG4mCxLAz9NIGpcK4ePiswganqP48BfbJi+f1YF2EMR3jpEXfga0Gb38rLEyAgIWDdKYJAEMhaQAeHRT4/iENnF7biDHr1iA7s4ETKkFOSfzc24ABtSCsO1SpfZF7NSwFCKYp2btVDG+FBKsddY39hvJwxD/ZSUFlJbMfOW9N1vheoUIMTw0HFEdPqOJpOlmrOrfF1aXKHjynd/ps0+8l8D2Bd3+gDaK64Fv3x/p+DmwZEml70ZFoV1UwdQZJ8VBgV+7BKn6jQWTnTXXVuBpaMU+HXz2BT8sbwWBkSNTaBDWxXPHvZXJPSpMJHBpIkrn2KqrIc/ze6PKipyGv+uzRkJivG4nnDuAJgGqeHlXVMkKg4MUtpfyhJZjGRAc4pidzUPwSdlvZL1ItXgKFvy1PDdN1RI0pKM5kLKViOVKMgUQ6TvaxOMLfpqXVWGemH7bKE4jWnXB4PoUKkkIG20XK3gEjoajoA+T5TddyUkWMEZiYXOixhDOz9IvKG2m7UrXxwVqVKzGk8GgG2kcPlu0nUAtJl5FBvOxiBNmhqiKJdaYA5Jiki0GdRnKncmcLBNplQtbCLHqq39PB6wsHgz/obLSWaCvMrHaWm/VbO8=
+android:
+  components:
+  - tools
+  - platform-tools
+  - build-tools-$ANDROID_BUILD_TOOLS
+  - android-$ANDROID_API
+  - extra-google-m2repository
+  - extra-android-m2repository
+  licenses:
+  - android-sdk-preview-license-.+
+  - android-sdk-license-.+
+  - google-gdk-license-.+
+before_install:
+- openssl aes-256-cbc -K $encrypted_46668131032f_key -iv $encrypted_46668131032f_iv
+  -in vta-keystore.jks.enc -out vta-android/vta-keystore.jks -d
+- cd vta-android
+- mkdir "$ANDROID_HOME/licenses" || true
+- echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
+- echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+- chmod +x gradlew
+script:
+- "./gradlew build"
+before_deploy:
+- cp $TRAVIS_BUILD_DIR/.keystore $HOME/vta-android/vta-keystore.jks
+- cd app/build/outputs/apk/
+- jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/vta-android/vta-keystore.jks
+  -storepass $storepass -keypass $keypass app-release-unsigned.apk vtakey
+- jarsigner -verify app-release-unsigned.apk
+- "${ANDROID_HOME}/build-tools/27.0.3/zipalign -v 4 app-release-unsigned.apk VTA.apk"
+deploy:
+  provider: releases
+  file: VTA.apk
+  skip_cleanup: true
+  on:
+    repo: pavan-08/BE-project
+    tags: true
+    jdk: oraclejdk8
+  api_key:
+    secure: u1RfJK3FDtvVpfgGT9VRGlykjcvyosVXhmfDh6pGTo6lqSzB0Lp54OEpP2baNOdlM1LPOq6bu9q7AY8mwW0igOeubbDMyhUxiZK+9pby4fL9rCui0DHDsSt7PrZd/rsE/VxAMywYv1epEADfyQUr4y8ra1PJcAAu3hMf9RNfeID2PqilZP4xsaSQO39i9u5lJgs85pkmxybme9HNy+EnB2GNFeVnN2/fwpZCFCYxi5NupNxBnGtlbdJ2CzC29Dzb0//iDnON/vRTKo6Dp7QcZjG2GhQPfBOMy+Kx6OdOiFtzANTKTslz88LsFiGnnEsaoPCxMbTZW/emv3IoiGEXSSyTTyIKjWYOrYHM0jjpkP9ipsxI/MVZadpvKgwfY59VhPFbyCJ46U9MQJUThVZUZYvSgDgJurqcV+fbLF+vpPwTdXpulJ6ix1Q/+SdI7oFYCRr6HHot3D6/K9QSwI48MqAUnmQv0WXzbfVVHHN55wBtaCxNVzFz2/aX+gexszi0OZCxSNFtsWY1i+uMuoT3cRxmC9r8YpldPDUlokiJizIct1t1PWW1DRiMAc56+cOnX1j3JDz1cMbYbfvymnNPMkCYr7JBoTlAW/WHgfQfLhpAW6wPmsSZFAEo3304DegdZE5Ab4BP50kb9Sf8y5Lyd+Wg15EuwQ/1jBR/hFDWPVQ=
