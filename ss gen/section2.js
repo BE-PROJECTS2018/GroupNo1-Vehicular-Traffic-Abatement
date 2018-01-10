@@ -1,7 +1,7 @@
 const Pageres = require('pageres');
 
 var count = 0;
-const timeout = 1/6; //mins
+const timeout = 15; //mins
 function takeSS(n, resolve) {
     const d = new Date();
     const fname = d.getDay() + "-" + d.getHours() + "-" + d.getMinutes();
