@@ -20,6 +20,7 @@ android:
   - tools
   - platform-tools
   - build-tools-$ANDROID_BUILD_TOOLS
+  - build-tools-26.0.2
   - android-$ANDROID_API
   - extra-google-m2repository
   - extra-android-m2repository
@@ -35,18 +36,17 @@ before_install:
 - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
 - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
 - chmod +x gradlew
-install:
-- echo y | android update sdk -u -a -t build-tools-26.0.2
 script:
 - "./gradlew assembleRelease"
 before_deploy:
 - cp $TRAVIS_BUILD_DIR/vta-keystore.jks $HOME/vta-android
-- cd app/build/outputs/apk/
+- cd app/build/outputs/apk/release
+- ls
 - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/vta-android/vta-keystore.jks
-  -storepass $storepass -keypass $keypass app-unsigned.apk vtakey
+  -storepass $storepass -keypass $keypass app-release-unsigned.apk vtakey
 - jarsigner -verify app-unsigned.apk
-- "${ANDROID_HOME}/build-tools/27.0.3/zipalign -v -p 4 app-unsigned.apk app-unsigned-aligned.apk"
-- "${ANDROID_HOME}/build-tools/27.0.3/apksigner sign --ks $HOME/vta-android/vta-keystore.jks --ks-key-alias vtakey --ks-pass pass:${storepass} --key-pass pass:${keypass} --out vta-release.apk app-unsigned-aligned.apk"
+- "${ANDROID_HOME}/build-tools/27.0.3/zipalign -v -p 4 app-release-unsigned.apk app-release-unsigned-aligned.apk"
+- "${ANDROID_HOME}/build-tools/27.0.3/apksigner sign --ks $HOME/vta-android/vta-keystore.jks --ks-key-alias vtakey --ks-pass pass:${storepass} --key-pass pass:${keypass} --out vta-release.apk app-release-unsigned-aligned.apk"
 deploy:
   provider: releases
   file: vta-release.apk
