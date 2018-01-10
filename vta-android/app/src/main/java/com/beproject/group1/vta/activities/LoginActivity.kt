@@ -189,16 +189,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                         spe.putString(key, response.getString(key))
                     }
                     spe.apply()
-                    val dialog = AlertDialog.Builder(this)
-                            .setTitle(getString(R.string.app_name))
-                            .setMessage("Login successful :)")
-                            .setCancelable(false)
-                            .setPositiveButton("OK") { _, _ ->
-                                //do nothing
-                            }
-                            .create()
-                    dialog.setCanceledOnTouchOutside(false)
-                    dialog.show()
+                    startActivity(Intent(this@LoginActivity, MapsActivity::class.java))
                 }
 
             }

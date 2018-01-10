@@ -27,6 +27,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import android.os.SystemClock
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
@@ -35,6 +36,19 @@ import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.maps.DirectionsApi
+import com.google.maps.GeoApiContext
+import com.google.maps.GeocodingApi
+import com.google.maps.PendingResult
+import com.google.maps.android.PolyUtil
+import com.google.maps.model.DirectionsResult
+import com.google.maps.model.DirectionsRoute
+import com.google.maps.model.GeocodingResult
+import com.google.maps.model.TravelMode
+import org.joda.time.DateTime
+import java.io.IOException
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListener {
@@ -47,9 +61,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var locCircle: Circle
     private lateinit var locFusedClient: FusedLocationProviderClient
     private lateinit var locCallback: LocationCallback
+    private lateinit var mLocationRequest: LocationRequest
     private lateinit var sensorManager: SensorManager
-    private lateinit var accelerometer: Sensor
-    private lateinit var magneticField: Sensor
+    private var accelerometer: Sensor? = null
+    private var magneticField: Sensor? = null
     private lateinit var valuesAccelerometer: FloatArray
     private lateinit var valuesMagneticField: FloatArray
 
@@ -63,6 +78,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var fromLocation: PlaceAutocompleteFragment
     private var toLocMarker: Marker? = null
     private var fromLocMarker: Marker? = null
+    private var route: Polyline? = null
+    private var hasSensors: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,7 +92,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        val mLocationRequest = LocationRequest()
+        mLocationRequest = LocationRequest()
         mLocationRequest.interval = 4000
         mLocationRequest.fastestInterval = 2000
         mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
@@ -103,12 +120,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 for(location: Location in locationResult!!.locations) {
                     Log.d("LOC RESULT", "Got one")
                     mylocation = location
-                    fromLocation.setText(mylocation!!.toString())
+                    //fromLocation.setText(mylocation!!.toString())
                     if(!locInit)
                         initMarker()
                     locCircle.radius = mylocation!!.accuracy.toDouble()
                     locMarker.position = LatLng(mylocation!!.latitude,mylocation!!.longitude)
-                    //locMarker.rotation = mylocation!!.bearing
+                    if(!hasSensors)
+                        locMarker.rotation = mylocation!!.bearing
                     locCircle.center = locMarker.position
                 }
             }
@@ -118,7 +136,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     .addOnSuccessListener { loc ->
                         if(loc != null) {
                             mylocation = loc
-                            fromLocation.setText(mylocation!!.toString())
+                            //fromLocation.setText(mylocation!!.toString())
                             if(!locInit) {
                                 initMarker()
                             }
@@ -128,6 +146,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         magneticField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+        hasSensors = accelerometer != null && magneticField != null
         valuesAccelerometer = FloatArray(3)
         valuesMagneticField = FloatArray(3)
 
@@ -158,8 +177,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 if(toLocMarker == null) {
                     toLocMarker = gmap.addMarker(MarkerOptions()
                             .position(place!!.latLng))
+                    if(fromLocMarker != null)
+                    {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
                 } else {
                     toLocMarker!!.position = place!!.latLng
+                    if(fromLocMarker != null)
+                    {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
                 }
             }
 
@@ -176,8 +203,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 if(fromLocMarker == null) {
                     fromLocMarker = gmap.addMarker(MarkerOptions()
                             .position(place!!.latLng))
+                    if(toLocMarker != null)
+                    {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
                 } else {
                     fromLocMarker!!.position = place!!.latLng
+                    if(toLocMarker != null)
+                    {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
                 }
             }
 
@@ -185,21 +220,57 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 Log.e("ERR", status!!.statusMessage)
             }
         })
+
+        source_my_location.setOnClickListener({ _ ->
+            GeocodingApi.reverseGeocode(getGeoContext(), com.google.maps.model.LatLng(mylocation!!.latitude, mylocation!!.longitude))
+                    .setCallback(object : PendingResult.Callback<Array<out GeocodingResult>> {
+                        override fun onResult(res: Array<out GeocodingResult>?) {
+                            runOnUiThread {
+                                fromLocation.setText(res!![0].formattedAddress)
+                                if(fromLocMarker == null) {
+                                    fromLocMarker = gmap.addMarker(MarkerOptions()
+                                            .position(LatLng(mylocation!!.latitude, mylocation!!.longitude)))
+                                    if(toLocMarker != null)
+                                    {
+                                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                                    }
+                                } else {
+                                    fromLocMarker!!.position = LatLng(mylocation!!.latitude, mylocation!!.longitude)
+                                    if(toLocMarker != null)
+                                    {
+                                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                                    }
+                                }
+                            }
+
+                        }
+
+                        override fun onFailure(e: Throwable?) {
+
+                        }
+                    })
+        })
     }
 
 
     override fun onPause() {
-        sensorManager.unregisterListener(this, accelerometer)
-        sensorManager.unregisterListener(this, magneticField)
+        if(hasSensors) {
+            sensorManager.unregisterListener(this, accelerometer)
+            sensorManager.unregisterListener(this, magneticField)
+        }
         locFusedClient.removeLocationUpdates(locCallback)
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        locFusedClient.removeLocationUpdates(locCallback)
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-        sensorManager.registerListener(this, magneticField, SensorManager.SENSOR_DELAY_NORMAL)
+        if(mayRequestLocation()) {
+            locFusedClient.requestLocationUpdates(mLocationRequest, locCallback, null)
+        }
+        if(hasSensors) {
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, magneticField, SensorManager.SENSOR_DELAY_NORMAL)
+        }
     }
 
     /**
@@ -213,7 +284,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
      */
     override fun onMapReady(googleMap: GoogleMap) {
         gmap = googleMap
-
         try {
             gmap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.ub__map_style))
         } catch (e: Resources.NotFoundException) {
@@ -235,6 +305,74 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     }
 
     //map utils start
+
+    private fun getDirectionsDetails(origin: String, destination: String, mode: TravelMode, callback: PendingResult.Callback<DirectionsResult>) {
+        val now = DateTime()
+
+        try {
+            DirectionsApi.newRequest(getGeoContext())
+                    .mode(mode)
+                    .origin(origin)
+                    .destination(destination)
+                    .departureTime(now)
+                    .setCallback(callback)
+        } catch (e: ApiException) {
+            e.printStackTrace()
+            Log.e("ERR", e.toString())
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+            Log.e("ERR", e.toString())
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.e("ERR", e.toString())
+        }
+    }
+
+    private fun positionCamera(route: DirectionsRoute, mMap: GoogleMap) {
+        val bounds = LatLngBounds.builder()
+                .include(LatLng(route.legs[0].startLocation.lat, route.legs[0].startLocation.lng))
+                .include(LatLng(route.legs[0].endLocation.lat, route.legs[0].endLocation.lng))
+                .build()
+        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 150))
+    }
+
+    private fun getGeoContext(): GeoApiContext {
+        return GeoApiContext.Builder()
+                .apiKey(getString(R.string.google_maps_key))
+                .build()
+
+    }
+
+    private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
+        val decodedPath = PolyUtil.decode(results.routes[0].overviewPolyline.encodedPath)
+        //List<com.google.maps.model.LatLng> decode = results.routes[0].overviewPolyline.decodePath();
+        if(route == null) {
+            route = mMap.addPolyline(PolylineOptions().addAll(decodedPath))
+        }
+        else {
+            route!!.points = decodedPath
+        }
+
+    }
+
+    private fun plotRoute(source: LatLng, destination: LatLng) {
+        val callback = object : PendingResult.Callback<DirectionsResult> {
+            override fun onResult(result: DirectionsResult?) {
+                runOnUiThread {
+                    addPolyline(result!!, gmap)
+                    gmap.setPadding(0,map_bar_layout.height + 60,0,0)
+                    positionCamera(result.routes[0], gmap)
+                }
+
+            }
+
+            override fun onFailure(e: Throwable?) {
+
+            }
+        }
+        getDirectionsDetails(source.latitude.toString() + "," + source.longitude.toString(), destination.latitude.toString() + "," + destination.longitude.toString(), TravelMode.DRIVING, callback)
+    }
+
     private fun initMarker() {
         locInit = true
         //gmap.isMyLocationEnabled = true
@@ -242,6 +380,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 .position(LatLng(mylocation!!.latitude, mylocation!!.longitude))
                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_location))
                 .anchor(0.5f,0.5f)
+                .rotation(mylocation!!.bearing)
                 .flat(true))
 
         locCircle = gmap.addCircle(CircleOptions()
@@ -354,11 +493,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         when(requestCode) {
             REQUEST_LOCATION -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    locFusedClient.requestLocationUpdates(mLocationRequest, locCallback, null)
                     locFusedClient.lastLocation
                             .addOnSuccessListener { loc ->
                                 if(loc != null) {
                                     mylocation = loc
-                                    fromLocation.setText(mylocation!!.toString())
+                                    //fromLocation.setText(mylocation!!.toString())
                                     initMarker()
                                 }
                             }
