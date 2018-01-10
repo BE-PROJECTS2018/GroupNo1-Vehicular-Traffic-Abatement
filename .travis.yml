@@ -49,9 +49,9 @@ script:
 before_deploy:
 #- cp $TRAVIS_BUILD_DIR/.keystore $HOME/vta-android/vta-keystore.jks
 - cd app/build/outputs/apk/
-# - jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/vta-android/vta-keystore.jks
-#   -storepass $storepass -keypass $keypass app-release-unsigned.apk vtakey
-# - jarsigner -verify app-release-unsigned.apk
+- jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/vta-android/vta-keystore.jks
+  -storepass $storepass -keypass $keypass app-release-unsigned.apk vtakey
+- jarsigner -verify app-release-unsigned.apk
 - "${ANDROID_HOME}/build-tools/27.0.3/zipalign -v -p 4 app-release-unsigned.apk app-release-unsigned-aligned.apk"
 - "${ANDROID_HOME}/build-tools/27.0.3/apksigner sign --ks vta-keystore.jks --ks-key-alias vtakey --ks-pass pass:${storepass} --key-pass pass:${keypass} --out vta-release.apk app-unsigned-aligned.apk"
 deploy:
