@@ -56,7 +56,7 @@ before_deploy:
 - "${ANDROID_HOME}/build-tools/27.0.3/apksigner sign --ks vta-keystore.jks --ks-key-alias vtakey --ks-pass pass:${storepass} --key-pass pass:${keypass} --out vta-release.apk app-unsigned-aligned.apk"
 deploy:
   provider: releases
-  file: VTA.apk
+  file: vta-release.apk
   skip_cleanup: true
   on:
     repo: pavan-08/BE-project
