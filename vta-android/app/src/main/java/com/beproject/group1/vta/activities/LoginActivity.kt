@@ -189,7 +189,9 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                         spe.putString(key, response.getString(key))
                     }
                     spe.apply()
-                    startActivity(Intent(this@LoginActivity, MapsActivity::class.java))
+                    val intent = Intent(this@LoginActivity, MapsActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    startActivity(intent)
                 }
 
             }

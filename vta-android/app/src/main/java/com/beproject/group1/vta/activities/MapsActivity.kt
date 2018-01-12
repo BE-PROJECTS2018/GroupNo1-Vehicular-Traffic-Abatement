@@ -173,7 +173,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
         toLocation.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place?) {
-                Log.d("Place", place!!.name.toString())
                 if(toLocMarker == null) {
                     toLocMarker = gmap.addMarker(MarkerOptions()
                             .position(place!!.latLng))
@@ -199,7 +198,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         fromLocation.setHint(getString(R.string.from_location))
         fromLocation.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place?) {
-                Log.d("Place", place!!.name.toString())
                 if(fromLocMarker == null) {
                     fromLocMarker = gmap.addMarker(MarkerOptions()
                             .position(place!!.latLng))
