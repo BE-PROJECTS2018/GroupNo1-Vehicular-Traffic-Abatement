@@ -78,7 +78,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var fromLocation: PlaceAutocompleteFragment
     private var toLocMarker: Marker? = null
     private var fromLocMarker: Marker? = null
-    private var route: Polyline? = null
+    private var route: ArrayList <Polyline> = ArrayList <Polyline> ()
     private var hasSensors: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -310,7 +310,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         val now = DateTime()
 
         try {
-            DirectionsApi.newRequest(getGeoContext())
+            return DirectionsApi.newRequest(getGeoContext()).alternatives(true)
                     .mode(mode)
                     .origin(origin)
                     .destination(destination)
@@ -344,13 +344,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     }
 
     private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
-        val decodedPath = PolyUtil.decode(results.routes[0].overviewPolyline.encodedPath)
-        //List<com.google.maps.model.LatLng> decode = results.routes[0].overviewPolyline.decodePath();
-        if(route == null) {
-            route = mMap.addPolyline(PolylineOptions().addAll(decodedPath))
+
+        Log.e("Total routes", ""+results.routes.size)
+        for(i in 0..route.size-1)
+        {
+            route.get(i).remove()
         }
-        else {
-            route!!.points = decodedPath
+        route.clear()
+        for(i in 0..results.routes.size-1) {
+            val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
+            //List<com.google.maps.model.LatLng> decode = results.routes[0].overviewPolyline.decodePath();
+            route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
+
         }
 
     }
