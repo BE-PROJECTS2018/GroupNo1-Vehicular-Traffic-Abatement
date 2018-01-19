@@ -3,7 +3,6 @@ package com.beproject.group1.vta.activities
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
-import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -27,6 +26,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import android.os.SystemClock
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
+import com.beproject.group1.vta.helpers.Geofence
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
@@ -36,8 +36,6 @@ import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.google.maps.DirectionsApi
 import com.google.maps.GeoApiContext
 import com.google.maps.GeocodingApi
@@ -250,6 +248,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         })
     }
 
+    override fun onBackPressed() {
+        if(fromLocMarker != null || toLocMarker != null || !route.isEmpty()) {
+            clearRoutesAndMarkers()
+        } else {
+            super.onBackPressed()
+        }
+    }
 
     override fun onPause() {
         if(hasSensors) {
@@ -300,6 +305,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         if(mayRequestLocation() && mylocation != null) {
             initMarker()
         }
+        Handler().postDelayed({
+            gmap.setPadding(0, map_bar_layout.height + 60, 0, 0)
+        }, 100)
     }
 
     //map utils start
@@ -343,17 +351,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
     private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
 
-        Log.e("Total routes", ""+results.routes.size)
-        for(i in 0..route.size-1)
+        Log.d("Total routes", ""+results.routes.size)
+        for(i in 0 until route.size)
         {
-            route.get(i).remove()
+            route[i].remove()
         }
         route.clear()
-        for(i in 0..results.routes.size-1) {
+        for(i in 0 until results.routes.size) {
             val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
             //List<com.google.maps.model.LatLng> decode = results.routes[0].overviewPolyline.decodePath();
-            route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
-
+            var add = true
+            for (path in decodedPath) {
+                add = Geofence.containsCoordinates(path.latitude, path.longitude)
+                if(!add) break
+            }
+            if(add)
+                route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
         }
 
     }
@@ -373,7 +386,34 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
             }
         }
-        getDirectionsDetails(source.latitude.toString() + "," + source.longitude.toString(), destination.latitude.toString() + "," + destination.longitude.toString(), TravelMode.DRIVING, callback)
+        if(Geofence.containsCoordinates(source.latitude, source.longitude)
+        && Geofence.containsCoordinates(destination.latitude, destination.longitude)) {
+            getDirectionsDetails(source.latitude.toString() + "," + source.longitude.toString(), destination.latitude.toString() + "," + destination.longitude.toString(), TravelMode.DRIVING, callback)
+        } else {
+            Snackbar.make(mapFragment.view!!,R.string.out_of_service_region, Snackbar.LENGTH_SHORT)
+                    .addCallback(object : Snackbar.Callback() {
+                        override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                            clearRoutesAndMarkers()
+                            super.onDismissed(transientBottomBar, event)
+                        }
+                    })
+                    .show()
+        }
+    }
+
+    private fun clearRoutesAndMarkers() {
+        fromLocMarker!!.remove()
+        fromLocMarker = null
+        toLocMarker!!.remove()
+        toLocMarker = null
+        fromLocation.setText("")
+        toLocation.setText("")
+        for(i in 0 until route.size)
+        {
+            route[i].remove()
+        }
+        route.clear()
+        gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(mylocation!!.latitude, mylocation!!.longitude), 15f))
     }
 
     private fun initMarker() {
