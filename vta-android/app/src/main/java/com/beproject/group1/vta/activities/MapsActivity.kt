@@ -31,6 +31,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
+import com.google.android.gms.location.places.AutocompleteFilter
 import com.google.android.gms.location.places.Place
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
@@ -54,8 +55,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var gmap: GoogleMap
     private lateinit var mapFragment: SupportMapFragment
     private var mylocation: Location? = null
-    private var locInit: Boolean = false
+    private var locInit = false
+    private var arrowInit = false
     private lateinit var locMarker: Marker
+    private lateinit var arrowMarker: Marker
     private lateinit var locCircle: Circle
     private lateinit var locFusedClient: FusedLocationProviderClient
     private lateinit var locCallback: LocationCallback
@@ -119,12 +122,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     Log.d("LOC RESULT", "Got one")
                     mylocation = location
                     //fromLocation.setText(mylocation!!.toString())
-                    if(!locInit)
+                    if(!locInit || !arrowInit)
                         initMarker()
                     locCircle.radius = mylocation!!.accuracy.toDouble()
                     locMarker.position = LatLng(mylocation!!.latitude,mylocation!!.longitude)
-                    if(!hasSensors)
-                        locMarker.rotation = mylocation!!.bearing
+                    arrowMarker.position = locMarker.position
+                    if(!hasSensors) {
+                        if(mylocation!!.hasBearing()) {
+                            arrowMarker.isVisible = true
+                            arrowMarker.rotation = mylocation!!.bearing
+                        } else {
+                            arrowMarker.isVisible = false
+                        }
+                    }
                     locCircle.center = locMarker.position
                 }
             }
@@ -135,7 +145,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         if(loc != null) {
                             mylocation = loc
                             //fromLocation.setText(mylocation!!.toString())
-                            if(!locInit) {
+                            if(!locInit || !arrowInit) {
                                 initMarker()
                             }
                         }
@@ -155,20 +165,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         my_location.setOnClickListener({_ ->
 
             if (mylocation != null) {
-                val latlng = LatLng(mylocation!!.latitude, mylocation!!.longitude)
-                val update = if (gmap.cameraPosition.zoom < 15f) {
-                    CameraUpdateFactory.newLatLngZoom(latlng, 15f)
-                } else {
-                    CameraUpdateFactory.newLatLng(latlng)
-                }
-                gmap.animateCamera(update)
+                locateMe()
             }
 
         })
 
+       /* val country:String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales[0].country
+        } else {
+            resources.configuration.locale.country
+        }*/
+        val typeFilter = AutocompleteFilter.Builder()
+                .setCountry("IN")
+                .build()
+
+
         toLocation = fragmentManager.findFragmentById(R.id.to_location) as PlaceAutocompleteFragment
         toLocation.setHint(getString(R.string.to_location))
-
+        toLocation.setFilter(typeFilter)
         toLocation.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place?) {
                 if(toLocMarker == null) {
@@ -194,6 +208,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
         fromLocation = fragmentManager.findFragmentById(R.id.from_location) as PlaceAutocompleteFragment
         fromLocation.setHint(getString(R.string.from_location))
+        fromLocation.setFilter(typeFilter)
         fromLocation.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place?) {
                 if(fromLocMarker == null) {
@@ -402,10 +417,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     }
 
     private fun clearRoutesAndMarkers() {
-        fromLocMarker!!.remove()
-        fromLocMarker = null
-        toLocMarker!!.remove()
-        toLocMarker = null
+        if(fromLocMarker != null) {
+            fromLocMarker!!.remove()
+            fromLocMarker = null
+        }
+        if(toLocMarker != null) {
+            toLocMarker!!.remove()
+            toLocMarker = null
+        }
         fromLocation.setText("")
         toLocation.setText("")
         for(i in 0 until route.size)
@@ -413,33 +432,58 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             route[i].remove()
         }
         route.clear()
-        gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(mylocation!!.latitude, mylocation!!.longitude), 15f))
+        locateMe()
     }
 
     private fun initMarker() {
-        locInit = true
+
         //gmap.isMyLocationEnabled = true
-        locMarker = gmap.addMarker(MarkerOptions()
-                .position(LatLng(mylocation!!.latitude, mylocation!!.longitude))
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_location))
-                .anchor(0.5f,0.5f)
-                .rotation(mylocation!!.bearing)
-                .flat(true))
+        if(!locInit) {
+            locInit = true
+            locMarker = gmap.addMarker(MarkerOptions()
+                    .position(LatLng(mylocation!!.latitude, mylocation!!.longitude))
+                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_location_dot))
+                    .anchor(0.5f, 0.5f)
+                    .flat(true))
+            locCircle = gmap.addCircle(CircleOptions()
+                    .center(LatLng(mylocation!!.latitude, mylocation!!.longitude))
+                    .radius(mylocation!!.accuracy.toDouble())
+                    .fillColor(Color.argb(50,93,188,210))
+                    .strokeWidth(0f))
 
-        locCircle = gmap.addCircle(CircleOptions()
-                .center(LatLng(mylocation!!.latitude, mylocation!!.longitude))
-                .radius(mylocation!!.accuracy.toDouble())
-                .fillColor(Color.argb(50,72,133,237))
-                .strokeWidth(1.5f)
-                .strokeColor(Color.rgb(72,133,237)))
+            locateMe()
+        }
 
-        my_location.performClick()
+        if(!arrowInit) {
+            arrowInit = true
+            arrowMarker = gmap.addMarker(MarkerOptions()
+                    .position(LatLng(mylocation!!.latitude, mylocation!!.longitude))
+                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_arrow))
+                    .anchor(0.5f, 0.7f)
+                    .rotation(mylocation!!.bearing)
+                    .flat(true))
+            if(!hasSensors) {
+                arrowMarker.isVisible = false
+            }
+        }
+
+
+    }
+
+    private fun locateMe() {
+        val latlng = LatLng(mylocation!!.latitude, mylocation!!.longitude)
+        val update = if (gmap.cameraPosition.zoom < 15f) {
+            CameraUpdateFactory.newLatLngZoom(latlng, 15f)
+        } else {
+            CameraUpdateFactory.newLatLng(latlng)
+        }
+        gmap.animateCamera(update)
     }
 
     private fun rotateMarker(toRotation: Float) {
         val handler = Handler()
         val start = SystemClock.uptimeMillis()
-        val startRotation = locMarker.rotation
+        val startRotation = arrowMarker.rotation
         val duration: Long = 1555
 
         val interpolator = LinearInterpolator()
@@ -451,7 +495,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
                 val rot = t * toRotation + (1 - t) * startRotation
 
-                locMarker.rotation = if (-rot > 180) rot / 2 else rot
+                arrowMarker.rotation = if (-rot > 180) rot / 2 else rot
                 if (t < 1.0) {
                     // Post again 16ms later.
                     handler.postDelayed(this, 16)
@@ -488,9 +532,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 val azimuth = Math.toDegrees(matrixValues[0].toDouble())
                 when {
                     oldAz == null -> {
-                        if(!locInit && mylocation != null)
+                        if((!locInit || !arrowInit) && mylocation != null)
                             initMarker()
-                        if(locInit)
+                        if(arrowInit)
                             rotateMarker(azimuth.toFloat())
                         oldAz = azimuth
                     }
@@ -500,9 +544,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     }
                     awaitingRotation -> {
                         awaitingRotation = false
-                        if(!locInit && mylocation != null)
+                        if((!locInit || !arrowInit) && mylocation != null)
                             initMarker()
-                        if(locInit)
+                        if(arrowInit)
                             rotateMarker(azimuth.toFloat())
                     }
                 }
