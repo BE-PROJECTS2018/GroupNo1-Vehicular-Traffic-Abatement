@@ -21,7 +21,7 @@ with open('config.json', 'r') as c:
 start = timeit.default_timer()
 count = 0
 done = 0
-vicinity = 30
+vicinity = 13
 images = glob.glob('../ss gen/images/**/*.png')
 total = len(images)
 for image in images:
@@ -37,11 +37,12 @@ for image in images:
         opfname = oppath[oppath.find('/')+1:]      #filename for output image
         opfldr  = oppath[:oppath.find('/')]        #folder name for output eg. section1
     frame   = cv2.imread(image)
-    lower_limit = np.array([40,0,0])
-    upper_limit = np.array([255,100,100])
-    mask = cv2.inRange(frame, lower_limit, upper_limit)
-    cv2.bitwise_not(mask,mask)
-    frame = cv2.bitwise_and(frame, frame, mask=mask)
+    # # Filtering out blue
+    # lower_limit = np.array([0,0,0])
+    # upper_limit = np.array([255,150,150])
+    # mask = cv2.inRange(frame, lower_limit, upper_limit)
+    # cv2.bitwise_not(mask,mask)
+    # frame = cv2.bitwise_and(frame, frame, mask=mask)
     #frame   = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
     date = datetime.datetime.fromtimestamp(os.path.getmtime(image))
     weekday = int(date.strftime('%w'))
@@ -74,7 +75,7 @@ for image in images:
         else:
             xS = latI - vicinity
         if latI == 599:
-            xE = 599
+            xE = 600
         else:
             xE = latI + 1
         
@@ -83,7 +84,7 @@ for image in images:
         else:
             yS = lngI - vicinity
         if 799 - lngI < vicinity:
-            yE = 799
+            yE = 800
         else:
             yE = lngI + vicinity
         if next((d for d in gdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
@@ -108,7 +109,7 @@ for image in images:
             #     resImage[latI][lngI - 1] = [80,202,132]
     # orange    
     lower_limit = np.array([0,100,200])
-    upper_limit = np.array([50,150,255])
+    upper_limit = np.array([70,160,255])
     mask = cv2.inRange(frame, lower_limit, upper_limit)
     orange = cv2.bitwise_and(frame, frame, mask=mask)
     # orange = cv2.resize(orange, (0,0), fx = 0.5, fy = 0.5)
@@ -123,7 +124,7 @@ for image in images:
         else:
             xS = latI - vicinity
         if latI == 599:
-            xE = 599
+            xE = 600
         else:
             xE = latI + 1
         
@@ -132,7 +133,7 @@ for image in images:
         else:
             yS = lngI - vicinity
         if 799 - lngI < vicinity:
-            yE = 799
+            yE = 800
         else:
             yE = lngI + vicinity
         if next((d for d in odata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
@@ -157,7 +158,7 @@ for image in images:
             #     resImage[latI][lngI - 1] = [2,125,240]
     # red
     lower_limit = np.array([0,0,200])
-    upper_limit = np.array([100,100,255])
+    upper_limit = np.array([100,75,255])
     mask = cv2.inRange(frame, lower_limit, upper_limit)
     red = cv2.bitwise_and(frame, frame, mask=mask)
     # red = cv2.resize(red, (0,0), fx = 0.5, fy = 0.5)
@@ -172,7 +173,7 @@ for image in images:
         else:
             xS = latI - vicinity
         if latI == 599:
-            xE = 599
+            xE = 600
         else:
             xE = latI + 1
         
@@ -181,7 +182,7 @@ for image in images:
         else:
             yS = lngI - vicinity
         if 799 - lngI < vicinity:
-            yE = 799
+            yE = 800
         else:
             yE = lngI + vicinity
         if next((d for d in rdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
@@ -221,7 +222,7 @@ for image in images:
         else:
             xS = latI - vicinity
         if latI == 599:
-            xE = 599
+            xE = 600
         else:
             xE = latI + 1
         
@@ -230,7 +231,7 @@ for image in images:
         else:
             yS = lngI - vicinity
         if 799 - lngI < vicinity:
-            yE = 799
+            yE = 800
         else:
             yE = lngI + vicinity
         if next((d for d in drdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
