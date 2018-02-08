@@ -26,7 +26,7 @@ images = glob.glob('../ss gen/images/**/*.png')
 total = len(images)
 for image in images:
     com = done/total*100
-    print('Completed [{:-<10}] {:.2f}%'.format('='*(int)(com/10),com), end='\r')
+    print('\rCompleted [{:-<10}] {:.2f}% {}'.format('='*(int)(com/10),com, image), end='')
     if os.name == 'nt':
         oppath  = image[image.find('\\')+1:]
         opfname = oppath[oppath.find('\\')+1:]      #filename for output image
@@ -266,7 +266,7 @@ for image in images:
     done += 1
 
 com = done/total*100
-print('Completed [{:-<10}] {:.2f}%'.format('='*(int)(com/10),com))
+print('\rCompleted [{:-<10}] {:.2f}%'.format('='*(int)(com/10),com))
 print('Total {} tuples recorded'.format(count))
 elapsed = (int)(timeit.default_timer() - start)
 days = elapsed // (24*60*60)
