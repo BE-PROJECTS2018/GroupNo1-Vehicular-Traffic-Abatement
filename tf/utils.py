@@ -2,6 +2,7 @@ import json, glob
 from random import shuffle
 
 def load_data(dir):
+    print('Loading data...', end='')
     tuple_paths = glob.glob(dir+'/**/*.json')
     data = []
     for path in tuple_paths:
@@ -21,4 +22,5 @@ def load_data(dir):
     for i in range(n_train,total):
         test_set['x'].append(x[i])
         test_set['y'].append(y[i])
+    print('Loading data...', end='')
     return [training_set, test_set]
