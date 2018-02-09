@@ -22,5 +22,5 @@ def load_data(dir):
     for i in range(n_train,total):
         test_set['x'].append(x[i])
         test_set['y'].append(y[i])
-    print('Loading data...', end='')
+    print('done')
     return [training_set, test_set]
