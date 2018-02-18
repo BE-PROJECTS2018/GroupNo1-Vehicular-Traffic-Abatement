@@ -27,6 +27,7 @@ import android.os.SystemClock
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
 import com.beproject.group1.vta.helpers.Geofence
+import com.beproject.group1.vta.helpers.TFPredictor
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
@@ -48,6 +49,7 @@ import com.google.maps.model.GeocodingResult
 import com.google.maps.model.TravelMode
 import org.joda.time.DateTime
 import java.io.IOException
+import java.util.*
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListener {
@@ -365,7 +367,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     }
 
     private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
-
+        val c = Calendar.getInstance()
+        val tfPredictor = TFPredictor(this)
         Log.d("Total routes", ""+results.routes.size)
         for(i in 0 until route.size)
         {
@@ -380,8 +383,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 add = Geofence.containsCoordinates(path.latitude, path.longitude)
                 if(!add) break
             }
-            if(add)
+            if(add) {
+                for(path in decodedPath) {
+                    c.time = Date()
+                    val traffic = tfPredictor.predict(
+                            path.latitude.toFloat(),
+                            path.longitude.toFloat(),
+                            c.get(Calendar.DAY_OF_WEEK) - 1,
+                            c.get(Calendar.HOUR_OF_DAY),
+                            c.get(Calendar.MINUTE))
+                }
                 route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
+            }
         }
 
     }

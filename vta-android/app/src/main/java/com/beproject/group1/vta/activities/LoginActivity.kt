@@ -238,7 +238,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
 
     private fun syncFilesAndLaunchApp(intent: Intent, accessToken: String) {
         apiController.downloadFile("freeze.pb", accessToken, Response.Listener<ByteArray> { response ->
-            // TODO handle the response
             try {
                 if (response != null) {
                     val outputStream: FileOutputStream
@@ -248,7 +247,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                     outputStream.close()
                     Toast.makeText(this, "PB Download complete.", Toast.LENGTH_LONG).show()
                     apiController.downloadFile("normalize.csv", accessToken, Response.Listener<ByteArray> { response ->
-                        // TODO handle the response
                         try {
                             if (response != null) {
 
@@ -262,33 +260,27 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                                 this@LoginActivity.finish()
                             }
                         } catch (e: Exception) {
-                            // TODO Auto-generated catch block
-                            Log.d("KEY_ERROR", "UNABLE TO DOWNLOAD CSV FILE")
+                            Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD CSV FILE")
                             e.printStackTrace()
                         }
                     }, Response.ErrorListener { error ->
-                        // TODO handle the error
                         error.printStackTrace()
                     })
                 }
             } catch (e: Exception) {
-                // TODO Auto-generated catch block
-                Log.d("KEY_ERROR", "UNABLE TO DOWNLOAD PB FILE")
+                Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD PB FILE")
                 e.printStackTrace()
             }
         }, Response.ErrorListener { error ->
-            // TODO handle the error
             error.printStackTrace()
         })
     }
 
     private fun isEmailValid(email: String): Boolean {
-        //TODO: Replace this with your own logic
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
     private fun isPasswordValid(password: String): Boolean {
-        //TODO: Replace this with your own logic
         return password.length > 4
     }
 

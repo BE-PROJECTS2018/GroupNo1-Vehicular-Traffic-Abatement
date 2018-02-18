@@ -115,7 +115,6 @@ class SplashScreen : AppCompatActivity() {
 
     private fun syncFilesAndLaunchApp(intent: Intent, accessToken: String) {
         apiController.downloadFile("freeze.pb", accessToken, Response.Listener<ByteArray> { response ->
-            // TODO handle the response
             try {
                 if (response != null) {
                     val outputStream: FileOutputStream
@@ -125,7 +124,6 @@ class SplashScreen : AppCompatActivity() {
                     outputStream.close()
                     Toast.makeText(this, "PB Download complete.", Toast.LENGTH_LONG).show()
                     apiController.downloadFile("normalize.csv", accessToken, Response.Listener<ByteArray> { response ->
-                        // TODO handle the response
                         try {
                             if (response != null) {
 
@@ -139,22 +137,18 @@ class SplashScreen : AppCompatActivity() {
                                 this@SplashScreen.finish()
                             }
                         } catch (e: Exception) {
-                            // TODO Auto-generated catch block
-                            Log.d("KEY_ERROR", "UNABLE TO DOWNLOAD CSV FILE")
+                            Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD CSV FILE")
                             e.printStackTrace()
                         }
                     }, Response.ErrorListener { error ->
-                        // TODO handle the error
                         error.printStackTrace()
                     })
                 }
             } catch (e: Exception) {
-                // TODO Auto-generated catch block
-                Log.d("KEY_ERROR", "UNABLE TO DOWNLOAD PB FILE")
+                Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD PB FILE")
                 e.printStackTrace()
             }
         }, Response.ErrorListener { error ->
-            // TODO handle the error
             error.printStackTrace()
         })
     }
