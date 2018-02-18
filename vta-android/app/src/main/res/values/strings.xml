@@ -28,4 +28,5 @@
     <string name="to_location">Destination</string>
     <string name="from_location">Source</string>
     <string name="out_of_service_region">We do not serve this region yet</string>
+    <string name="offline_alert">Currently offline</string>
 </resources>
