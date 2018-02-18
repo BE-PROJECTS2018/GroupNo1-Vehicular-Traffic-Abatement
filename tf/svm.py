@@ -8,22 +8,24 @@ NUM_CLASSES = 4
 num_steps=100
 
 [training_set, test_set] = load_data('data')
-
-# real_feature_column = [tf.contrib.layers.real_valued_column(training_set['x'])] 
-#    default_value=None,
-#    dtype=tf.float32,
-#    normalizer=None)
-# feature_columns = [tf.contrib.layers.real_valued_column("x",dimesion=1,default_value=None,dtype=tf.float32,normalizer=None)]
-#sparse_feature_column = tf.contrib.layers.sparse_column_with_hash_bucket(...) 
-real_feature_column = [tf.feature_column.numeric_column("x", shape=[num_input])]
+#lat = tf.contrib.layers.real_valued_column(training_set['x'][0])
+#lng = tf.contrib.layers.real_valued_column(training_set['x'][1])
+#weekday = tf.contrib.layers.real_valued_column(training_set['x'][2])
+#hour = tf.contrib.layers.real_valued_column(training_set['x'][3])
+#mins = tf.contrib.layers.real_valued_column(training_set['x'][4])
+feature_column_data = training_set['x']
+feature_tensor = tf.constant(feature_column_data)
+feature_columns = [tf.contrib.layers.real_valued_column(feature_tensor,dimension=4)]
+#sparse_feature_column = tf.contrib.layers.sparse_column_with_hash_bucket(...)
+# real_feature_column = [tf.feature_column.numeric_column("x", shape=[num_input])]
 
 # instantiate the SVM class
 #classifier = SVM(alpha=LEARNING_RATE, batch_size=BATCH_SIZE, svm_c=arguments.svm_c, num_classes=NUM_CLASSES,
 #    num_features=feature_columns)
 
 # SVM Class - 2
-estimator = tf.contrib.learn.SVM(example_id_column = 'example_id', 
-                feature_columns = real_feature_column,
+estimator = tf.contrib.learn.SVM(example_id_column = 'example_id',
+                feature_columns = feature_columns,
                 weight_column_name = None,
                 model_dir = None,
                 l1_regularization = 0.0,
@@ -71,4 +73,6 @@ print(accuracy_score)
 # Evaluate accuracy.
 #accuracy_score = classifier.evaluate(input_fn=test_input_fn)
 #print(accuracy_score)
+
+
 
