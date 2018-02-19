@@ -384,17 +384,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 if(!add) break
             }
             if(add) {
-                for(path in decodedPath) {
+                val polyLineOptions = PolylineOptions()
+                for(i in 0 until decodedPath.size) {
                     c.time = Date()
                     val traffic = tfPredictor.predict(
-                            path.latitude.toFloat(),
-                            path.longitude.toFloat(),
+                            decodedPath[i].latitude.toFloat(),
+                            decodedPath[i].longitude.toFloat(),
                             c.get(Calendar.DAY_OF_WEEK) - 1,
                             c.get(Calendar.HOUR_OF_DAY),
                             c.get(Calendar.MINUTE))
+
+                    if(traffic == 0L)
+                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.GREEN)
+                    else if(traffic == 1L)
+                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.YELLOW)
+                    else if(traffic == 2L)
+                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.RED)
+                    else if(traffic == 3L)
+                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.BLUE)
+            //        Log.d("Traffic variable", " "+ traffic)
+                   Log.d("Latitude", ""+ decodedPath[i].latitude.toFloat())
+                    Log.d("Latitude", ""+ decodedPath[i].longitude.toFloat())
                 }
-                route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
+
+                route.add(mMap.addPolyline(polyLineOptions))
+               // route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
             }
+
         }
 
     }
