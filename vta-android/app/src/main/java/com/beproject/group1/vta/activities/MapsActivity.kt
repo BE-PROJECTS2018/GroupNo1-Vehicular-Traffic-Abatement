@@ -385,28 +385,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             }
             if(add) {
                 val polyLineOptions = PolylineOptions()
-                for(i in 0 until decodedPath.size) {
+                for(i in 0 until decodedPath.size-1) {
                     c.time = Date()
+                    mMap.addMarker(MarkerOptions().position(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())))
+
                     val traffic = tfPredictor.predict(
-                            decodedPath[i].latitude.toFloat(),
-                            decodedPath[i].longitude.toFloat(),
+                            decodedPath[i+1].latitude.toFloat(),
+                            decodedPath[i+1].longitude.toFloat(),
                             c.get(Calendar.DAY_OF_WEEK) - 1,
                             c.get(Calendar.HOUR_OF_DAY),
                             c.get(Calendar.MINUTE))
 
+
+                    val location = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i+1].latitude.toDouble(), decodedPath[i+1].longitude.toDouble())
+                    Log.d("Midpoint Lat", " " + location.get(0))
                     if(traffic == 0L)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.GREEN)
+                        polyLineOptions.add(LatLng(location.get(0),location.get(1))).color(Color.GREEN)
                     else if(traffic == 1L)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.YELLOW)
+                        polyLineOptions.add(LatLng(location.get(0),location.get(1))).color(Color.YELLOW)
                     else if(traffic == 2L)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.RED)
+                        polyLineOptions.add(LatLng(location.get(0),location.get(1))).color(Color.RED)
                     else if(traffic == 3L)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(),decodedPath[i].longitude.toDouble())).color(Color.BLUE)
+                        polyLineOptions.add(LatLng(location.get(0),location.get(1))).color(Color.BLUE)
             //        Log.d("Traffic variable", " "+ traffic)
                    Log.d("Latitude", ""+ decodedPath[i].latitude.toFloat())
-                    Log.d("Latitude", ""+ decodedPath[i].longitude.toFloat())
+                    Log.d("Longitude", ""+ decodedPath[i].longitude.toFloat())
                 }
-
                 route.add(mMap.addPolyline(polyLineOptions))
                // route.add(mMap.addPolyline(PolylineOptions().addAll(decodedPath)))
             }
@@ -443,6 +447,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     })
                     .show()
         }
+    }
+
+    private fun midPoint(lat1: Double, lon1: Double, lat2: Double, lon2: Double): List<Double> {
+        var lat1 = lat1
+        var lon1 = lon1
+        var lat2 = lat2
+
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        //convert to radians
+        lat1 = Math.toRadians(lat1)
+        lat2 = Math.toRadians(lat2)
+        lon1 = Math.toRadians(lon1)
+
+        val Bx = Math.cos(lat2) * Math.cos(dLon)
+        val By = Math.cos(lat2) * Math.sin(dLon)
+        val lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By))
+        val lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx)
+
+
+        val lat_in_degree = Math.toDegrees(lat3)
+        val lon_in_degree = Math.toDegrees(lon3)
+
+        val location = ArrayList<Double>()
+        location.add(lat_in_degree)
+        location.add(lon_in_degree)
+        return location
     }
 
     private fun clearRoutesAndMarkers() {
