@@ -65,7 +65,7 @@ num_targets = 3
 
 n_hidden = 5
 
-learning_rate = 0.5
+learning_rate = 0.2
 
 num_steps=100
 feature_columns = [tf.feature_column.numeric_column("x", shape=[num_input])]
@@ -73,7 +73,7 @@ feature_columns = [tf.feature_column.numeric_column("x", shape=[num_input])]
 regressor = tf.estimator.DNNRegressor(feature_columns=feature_columns,
                                         hidden_units=[n_hidden, n_hidden, n_hidden],
                                         label_dimension=num_targets,
-                                        optimizer=tf.train.AdamOptimizer(
+                                        optimizer=tf.train.ProximalAdagradOptimizer(
                                             learning_rate=learning_rate),
                                         model_dir='meta/{}_model'.format(model_name))
 
