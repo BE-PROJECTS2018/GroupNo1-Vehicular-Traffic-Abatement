@@ -21,6 +21,7 @@ import java.io.FileOutputStream
 
 class SplashScreen : AppCompatActivity() {
     private val SPLASH_DISPLAY_LENGTH: Long = 500
+    private val model_name: String = "nn_v2"
     private lateinit var service: VolleyService
     private lateinit var apiController: APIController
     private lateinit var sp: SharedPreferences
@@ -87,7 +88,7 @@ class SplashScreen : AppCompatActivity() {
         val tz = TimeZone.getTimeZone("UTC")
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         sdf.timeZone = tz
-        apiController.getFileInfo("freeze.pb", accessToken) {response ->
+        apiController.getFileInfo("freeze_$model_name.pb", accessToken) { response ->
             if(response == null) {
                 Toast.makeText(applicationContext, getString(R.string.offline_alert), Toast.LENGTH_SHORT).show()
                 this@SplashScreen.startActivity(intent)
@@ -103,6 +104,9 @@ class SplashScreen : AppCompatActivity() {
                     val date1 = sdf.parse(fmtime)
                     val date2 = sdf.parse(newfmtime)
                     if (date1.before(date2)) {
+                        val spe = sp.edit()
+                        spe.putString("fmtime", newfmtime)
+                        spe.apply()
                         syncFilesAndLaunchApp(intent, accessToken)
                     } else {
                         this@SplashScreen.startActivity(intent)
@@ -114,21 +118,21 @@ class SplashScreen : AppCompatActivity() {
     }
 
     private fun syncFilesAndLaunchApp(intent: Intent, accessToken: String) {
-        apiController.downloadFile("freeze.pb", accessToken, Response.Listener<ByteArray> { response ->
+        apiController.downloadFile("freeze_$model_name.pb", accessToken, Response.Listener<ByteArray> { response ->
             try {
                 if (response != null) {
                     val outputStream: FileOutputStream
-                    val name = "freeze.pb"
+                    val name = "freeze_$model_name.pb"
                     outputStream = openFileOutput(name, Context.MODE_PRIVATE)
                     outputStream.write(response)
                     outputStream.close()
                     Toast.makeText(this, "PB Download complete.", Toast.LENGTH_LONG).show()
-                    apiController.downloadFile("normalize.csv", accessToken, Response.Listener<ByteArray> { response ->
+                    apiController.downloadFile("normalize_$model_name.csv", accessToken, Response.Listener<ByteArray> { response ->
                         try {
                             if (response != null) {
 
                                 val outputStream: FileOutputStream
-                                val name = "normalize.csv"
+                                val name = "normalize_$model_name.csv"
                                 outputStream = openFileOutput(name, Context.MODE_PRIVATE)
                                 outputStream.write(response)
                                 outputStream.close()

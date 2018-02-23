@@ -47,6 +47,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private var isLoggingIn = false
+    private val model_name = "nn_v2"
     private lateinit var service: VolleyService
     private lateinit var apiController: APIController
 
@@ -210,7 +211,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         val tz = TimeZone.getTimeZone("UTC")
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         sdf.timeZone = tz
-        apiController.getFileInfo("freeze.pb", accessToken) {response ->
+        apiController.getFileInfo("freeze_$model_name.pb", accessToken) { response ->
             if(response == null) {
                 Toast.makeText(applicationContext, getString(R.string.offline_alert), Toast.LENGTH_SHORT).show()
                 this@LoginActivity.startActivity(intent)
@@ -226,6 +227,9 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                     val date1 = sdf.parse(fmtime)
                     val date2 = sdf.parse(newfmtime)
                     if (date1.before(date2)) {
+                        val spe = sp.edit()
+                        spe.putString("fmtime", newfmtime)
+                        spe.apply()
                         syncFilesAndLaunchApp(intent, accessToken)
                     } else {
                         this@LoginActivity.startActivity(intent)
@@ -237,21 +241,21 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
     }
 
     private fun syncFilesAndLaunchApp(intent: Intent, accessToken: String) {
-        apiController.downloadFile("freeze.pb", accessToken, Response.Listener<ByteArray> { response ->
+        apiController.downloadFile("freeze_$model_name.pb", accessToken, Response.Listener<ByteArray> { response ->
             try {
                 if (response != null) {
                     val outputStream: FileOutputStream
-                    val name = "freeze.pb"
+                    val name = "freeze_$model_name.pb"
                     outputStream = openFileOutput(name, Context.MODE_PRIVATE)
                     outputStream.write(response)
                     outputStream.close()
                     Toast.makeText(this, "PB Download complete.", Toast.LENGTH_LONG).show()
-                    apiController.downloadFile("normalize.csv", accessToken, Response.Listener<ByteArray> { response ->
+                    apiController.downloadFile("normalize_$model_name.csv", accessToken, Response.Listener<ByteArray> { response ->
                         try {
                             if (response != null) {
 
                                 val outputStream: FileOutputStream
-                                val name = "normalize.csv"
+                                val name = "normalize_$model_name.csv"
                                 outputStream = openFileOutput(name, Context.MODE_PRIVATE)
                                 outputStream.write(response)
                                 outputStream.close()
@@ -292,34 +296,27 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            val shortAnimTime = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+        val shortAnimTime = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
 
-            login_form.visibility = if (show) View.GONE else View.VISIBLE
-            login_form.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha((if (show) 0 else 1).toFloat())
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            login_form.visibility = if (show) View.GONE else View.VISIBLE
-                        }
-                    })
+        login_form.visibility = if (show) View.GONE else View.VISIBLE
+        login_form.animate()
+                .setDuration(shortAnimTime)
+                .alpha((if (show) 0 else 1).toFloat())
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        login_form.visibility = if (show) View.GONE else View.VISIBLE
+                    }
+                })
 
-            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-            login_progress.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha((if (show) 1 else 0).toFloat())
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-                        }
-                    })
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-            login_form.visibility = if (show) View.GONE else View.VISIBLE
-        }
+        login_progress.visibility = if (show) View.VISIBLE else View.GONE
+        login_progress.animate()
+                .setDuration(shortAnimTime)
+                .alpha((if (show) 1 else 0).toFloat())
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        login_progress.visibility = if (show) View.VISIBLE else View.GONE
+                    }
+                })
     }
 
     override fun onCreateLoader(i: Int, bundle: Bundle?): Loader<Cursor> {

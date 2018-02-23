@@ -26,6 +26,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 import android.os.SystemClock
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
+import com.beproject.group1.vta.helpers.ETA
 import com.beproject.group1.vta.helpers.Geofence
 import com.beproject.group1.vta.helpers.TFPredictor
 import com.google.android.gms.common.api.ApiException
@@ -388,50 +389,54 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             if(add) {
                 val polyLineOptions = PolylineOptions()
                 var time: Double = 0.toDouble()
-                for(i in 0 until decodedPath.size) {
+                for(j in 0 until decodedPath.size) {
                     c.time = Date()
                     //mMap.addMarker(MarkerOptions().position(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())))
                     val traffic = tfPredictor.predict(
-                            decodedPath[i].latitude.toFloat(),
-                            decodedPath[i].longitude.toFloat(),
+                            decodedPath[j].latitude.toFloat(),
+                            decodedPath[j].longitude.toFloat(),
                             c.get(Calendar.DAY_OF_WEEK) - 1,
                             c.get(Calendar.HOUR_OF_DAY),
                             c.get(Calendar.MINUTE))
-                    if(i == 0){
-                        val location0 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i+1].latitude.toDouble(), decodedPath[i+1].longitude.toDouble())
-                        val distance0 = getDistanceFromLatLonInKm(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(),location0.get(0).toDouble(), location0.get(1).toDouble())
-                        val speed0 = calculateSpeed(traffic.toDouble())
-                        //Log.d("Distance 0 : " ,"" + distance0)
-                        time = time + distance0/speed0
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GRAY)
-                        polyLineOptions.add(LatLng(location0.get(0), location0.get(1))).color(Color.GRAY)
-                    }else if ( i == decodedPath.size-1){
-                        val location1 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i-1].latitude.toDouble(), decodedPath[i-1].longitude.toDouble())
-                        val distance1 = getDistanceFromLatLonInKm(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(),location1.get(0).toDouble(), location1.get(1).toDouble())
-                        val speed1 = calculateSpeed(traffic.toDouble())
-                        //Log.d("Distance 1 : " ,"" + distance1)
-                        time = time + distance1/speed1
-                        polyLineOptions.add(LatLng(location1.get(0), location1.get(1))).color(Color.GRAY)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GRAY)
-                    }else{
-                        val location2 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i-1].latitude.toDouble(), decodedPath[i-1].longitude.toDouble())
-                        val distance2 = getDistanceFromLatLonInKm(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(),location2.get(0), location2.get(1))
-                        val speed2 = calculateSpeed(traffic.toDouble())
-                        //Log.d("Distance 2 : " ,"" + distance2)
-                        time = time + distance2/speed2
-                        polyLineOptions.add(LatLng(location2.get(0), location2.get(1))).color(Color.GRAY)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GRAY)
-                        val location3 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i+1].latitude.toDouble(), decodedPath[i+1].longitude.toDouble())
-                        val distance3 = getDistanceFromLatLonInKm(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(),location3.get(0), location3.get(1))
-                        val speed3 = calculateSpeed(traffic.toDouble())
-                        //Log.d("Distance 3 : " ,"" + distance3)
-                        time = time + distance3/speed3
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GRAY)
-                        polyLineOptions.add(LatLng(location3.get(0), location3.get(1))).color(Color.GRAY)
+                    when (j) {
+                        0 -> {
+                            val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
+                            val distance0 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location0[0], location0[1])
+                            val speed0 = ETA.speed(traffic.toInt())
+                            //Log.d("Distance 0 : " ,"" + distance0)
+                            time += distance0 / speed0
+                            polyLineOptions.add(LatLng(decodedPath[j].latitude, decodedPath[j].longitude)).color(Color.GRAY)
+                            polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.GRAY)
+                        }
+                        decodedPath.size-1 -> {
+                            val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
+                            val distance1 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location1[0], location1[1])
+                            val speed1 = ETA.speed(traffic.toInt())
+                            //Log.d("Distance 1 : " ,"" + distance1)
+                            time += distance1 / speed1
+                            polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.GRAY)
+                            polyLineOptions.add(LatLng(decodedPath[j].latitude, decodedPath[j].longitude)).color(Color.GRAY)
+                        }
+                        else -> {
+                            val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
+                            val distance2 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location2[0], location2[1])
+                            val speed2 = ETA.speed(traffic.toInt())
+                            //Log.d("Distance 2 : " ,"" + distance2)
+                            time += distance2 / speed2
+                            polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.GRAY)
+                            polyLineOptions.add(LatLng(decodedPath[j].latitude, decodedPath[j].longitude)).color(Color.GRAY)
+                            val location3 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
+                            val distance3 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location3[0], location3[1])
+                            val speed3 = ETA.speed(traffic.toInt())
+                            //Log.d("Distance 3 : " ,"" + distance3)
+                            time += distance3 / speed3
+                            polyLineOptions.add(LatLng(decodedPath[j].latitude, decodedPath[j].longitude)).color(Color.GRAY)
+                            polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.GRAY)
+                        }
                     }
                 }
                 route.add(mMap.addPolyline(polyLineOptions))
-                route_time.add(time*3600)
+                route_time.add(time)
                 Log.d("Estimated Time",""+ timeConversion((time*3600).toInt()))
             }
         }
@@ -455,65 +460,89 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         c.get(Calendar.DAY_OF_WEEK) - 1,
                         c.get(Calendar.HOUR_OF_DAY),
                         c.get(Calendar.MINUTE))
-                if(i == 0){
-                    val location0 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i+1].latitude.toDouble(), decodedPath[i+1].longitude.toDouble())
-                    if(traffic == 0L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GREEN)
-                        polyLineOptions.add(LatLng(location0.get(0), location0.get(1))).color(Color.GREEN)
-                    } else if(traffic == 1L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.YELLOW)
-                        polyLineOptions.add(LatLng(location0.get(0), location0.get(1))).color(Color.YELLOW)
-                    } else if(traffic == 2L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.RED)
-                        polyLineOptions.add(LatLng(location0.get(0), location0.get(1))).color(Color.RED)
-                    } else if(traffic == 3L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.BLACK)
-                        polyLineOptions.add(LatLng(location0.get(0), location0.get(1))).color(Color.BLACK)
+                when (i) {
+                    0 -> {
+                        val location0 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i+1].latitude, decodedPath[i+1].longitude)
+                        when (traffic) {
+                            0L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.GREEN)
+                            }
+                            1L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.YELLOW)
+                            }
+                            2L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.RED)
+                            }
+                            3L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.BLACK)
+                            }
+                        }
                     }
-                }else if ( i == decodedPath.size-1){
-                    val location1 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i-1].latitude.toDouble(), decodedPath[i-1].longitude.toDouble())
-                    if(traffic == 0L) {
-                        polyLineOptions.add(LatLng(location1.get(0), location1.get(1))).color(Color.GREEN)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GREEN)
-                    } else if(traffic == 1L) {
-                        polyLineOptions.add(LatLng(location1.get(0), location1.get(1))).color(Color.YELLOW)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.YELLOW)
-                    } else if(traffic == 2L) {
-                        polyLineOptions.add(LatLng(location1.get(0), location1.get(1))).color(Color.RED)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.RED)
-                    } else if(traffic == 3L) {
-                        polyLineOptions.add(LatLng(location1.get(0), location1.get(1))).color(Color.BLACK)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.BLACK)
+                    decodedPath.size-1 -> {
+                        val location1 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i-1].latitude, decodedPath[i-1].longitude)
+                        when (traffic) {
+                            0L -> {
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
+                            }
+                            1L -> {
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
+                            }
+                            2L -> {
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.RED)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
+                            }
+                            3L -> {
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
+                            }
+                        }
                     }
-                }else{
-                    val location2 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i-1].latitude.toDouble(), decodedPath[i-1].longitude.toDouble())
-                    if(traffic == 0L) {
-                        polyLineOptions.add(LatLng(location2.get(0), location2.get(1))).color(Color.GREEN)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GREEN)
-                    } else if(traffic == 1L) {
-                        polyLineOptions.add(LatLng(location2.get(0), location2.get(1))).color(Color.YELLOW)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.YELLOW)
-                    } else if(traffic == 2L) {
-                        polyLineOptions.add(LatLng(location2.get(0), location2.get(1))).color(Color.RED)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.RED)
-                    } else if(traffic == 3L) {
-                        polyLineOptions.add(LatLng(location2.get(0), location2.get(1))).color(Color.BLACK)
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.BLACK)
-                    }
+                    else -> {
+                        val location2 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i-1].latitude, decodedPath[i-1].longitude)
+                        when (traffic) {
+                            0L -> {
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
+                            }
+                            1L -> {
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
+                            }
+                            2L -> {
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.RED)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
+                            }
+                            3L -> {
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
+                            }
+                        }
 
-                    val location3 = midPoint(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble(), decodedPath[i+1].latitude.toDouble(), decodedPath[i+1].longitude.toDouble())
-                    if(traffic == 0L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.GREEN)
-                        polyLineOptions.add(LatLng(location3.get(0), location3.get(1))).color(Color.GREEN)
-                    } else if(traffic == 1L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.YELLOW)
-                        polyLineOptions.add(LatLng(location3.get(0), location3.get(1))).color(Color.YELLOW)
-                    } else if(traffic == 2L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.RED)
-                        polyLineOptions.add(LatLng(location3.get(0), location3.get(1))).color(Color.RED)
-                    } else if(traffic == 3L) {
-                        polyLineOptions.add(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())).color(Color.BLACK)
-                        polyLineOptions.add(LatLng(location3.get(0), location3.get(1))).color(Color.BLACK)
+                        val location3 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i+1].latitude, decodedPath[i+1].longitude)
+                        when (traffic) {
+                            0L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.GREEN)
+                            }
+                            1L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.YELLOW)
+                            }
+                            2L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.RED)
+                            }
+                            3L -> {
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.BLACK)
+                            }
+                        }
                     }
                 }
             }

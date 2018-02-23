@@ -7,7 +7,7 @@ import java.text.DecimalFormat;
  */
 
 public class ETA {
-    static double distance(double srcLat, double srcLong, double destLat, double destLong)
+    public static double distance(double srcLat, double srcLong, double destLat, double destLong)
     {
         int R = 6371000;
         double diffLat = Math.toRadians(destLat - srcLat);
@@ -16,7 +16,7 @@ public class ETA {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
-    static double speed(int mode)
+    public static double speed(int mode)
     {
         switch(mode)
         {
