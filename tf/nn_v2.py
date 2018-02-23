@@ -7,6 +7,7 @@ from math import fabs
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+model_name='nn_v2'
 
 def normalize(data):
     min = data.min()
@@ -24,7 +25,7 @@ def load_csv(fname, do_normalize=False, save_as_csv=False, split_percent=80):
     print('Loading data...', end='', flush=True)
     raw = np.array(get_data(fname)[fname][1:])
     x = raw[:,:5]
-    y = raw[:,5:]
+    y = raw[:,6:]
     print('done', flush=True)
     if do_normalize:
         print('Normalizing inputs...', end='', flush=True)
@@ -34,7 +35,7 @@ def load_csv(fname, do_normalize=False, save_as_csv=False, split_percent=80):
             coeffs[0].append(min)
             coeffs[1].append(max)
         coeffs = OrderedDict([('', coeffs)])
-        save_data('normalize.csv', coeffs)
+        save_data('normalize_{}.csv'.format(model_name), coeffs)
         for i in range(y.shape[1]):
             y[:,i] = roundup(y[:,i])
         if save_as_csv:
@@ -60,7 +61,7 @@ def load_csv(fname, do_normalize=False, save_as_csv=False, split_percent=80):
 [training_set, test_set] = load_csv('v2.csv', do_normalize=True)
 nTest = len(test_set['x'])
 num_input = 5
-num_targets = 4
+num_targets = 3
 
 n_hidden = 5
 
@@ -69,13 +70,12 @@ learning_rate = 0.5
 num_steps=100
 feature_columns = [tf.feature_column.numeric_column("x", shape=[num_input])]
 
-classifier = tf.estimator.DNNRegressor(feature_columns=feature_columns,
-                                        hidden_units=[n_hidden,n_hidden,n_hidden],
+regressor = tf.estimator.DNNRegressor(feature_columns=feature_columns,
+                                        hidden_units=[n_hidden, n_hidden, n_hidden],
                                         label_dimension=num_targets,
-                                        optimizer=tf.train.ProximalAdagradOptimizer(
-                                            learning_rate=learning_rate,
-                                            l2_regularization_strength=0.1),
-                                        model_dir='meta/nn_v2_model')
+                                        optimizer=tf.train.AdamOptimizer(
+                                            learning_rate=learning_rate),
+                                        model_dir='meta/{}_model'.format(model_name))
 
 train_input_fn = tf.estimator.inputs.numpy_input_fn(
     x={"x": np.array(training_set['x'])},
@@ -85,7 +85,7 @@ train_input_fn = tf.estimator.inputs.numpy_input_fn(
     shuffle=True)
 print('Training...', end='', flush=True)
 # Train model.
-classifier.train(input_fn=train_input_fn)
+regressor.train(input_fn=train_input_fn)
 print('done')
 
 # Define the test inputs
@@ -97,7 +97,7 @@ test_input_fn = tf.estimator.inputs.numpy_input_fn(
 
 print('Testing...', end='', flush=True)
 # Evaluate accuracy.
-accuracy_score = classifier.evaluate(input_fn=test_input_fn)
+accuracy_score = regressor.evaluate(input_fn=test_input_fn)
 print('done')
 print(accuracy_score)
 samples = np.array(test_set['x'])
@@ -106,19 +106,18 @@ predict_input_fn = tf.estimator.inputs.numpy_input_fn(
     num_epochs=1,
     shuffle=False)
 
-predictions = list(classifier.predict(input_fn=predict_input_fn))
+predictions = list(regressor.predict(input_fn=predict_input_fn))
 error = np.zeros(num_targets)
-b = False
 for i in range(nTest):
     for j in range(num_targets):
-        if(predictions[i]['predictions'][j] < 0):
-            b = True
         error[j] += fabs(round(predictions[i]['predictions'][j], 4) - test_set['y'][i][j]) * 100
-print(b)
 
+avg = 0
 for i in range(num_targets):
     error[i] /= nTest
     error[i] = round(error[i], 2)
+    avg += error[i]
 print("\nError rate for each output")
 print(error)
-export_model(classifier, 'nn_v2', num_input)
+print('Average error rate: {}%'.format(round(avg/num_targets, 2)))
+export_model(regressor, model_name, num_input)
