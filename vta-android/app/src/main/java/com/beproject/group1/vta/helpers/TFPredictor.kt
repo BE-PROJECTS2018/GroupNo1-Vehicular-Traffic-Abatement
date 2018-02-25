@@ -17,7 +17,6 @@ class TFPredictor internal constructor(act: Activity) {
     private val WEEK_INDEX = 2
     private val HOUR_INDEX = 3
     private val MIN_INDEX = 4
-    private val model_name = "nn_v2"
     private val group_factor: Int = 8
     private val N: Double = 19.06398378548459
     private val E: Double = 72.92025113769535
@@ -41,26 +40,27 @@ class TFPredictor internal constructor(act: Activity) {
     }
     fun predict(latitude: Float, longitude: Float, weekday: Int, hour: Int, minutes: Int): Long {
         val input = floatArrayOf(
-                normalize(findGridLat(latitude).toFloat(), normalizeCoeffs[0][LAT_INDEX], normalizeCoeffs[1][LAT_INDEX]),
-                normalize(findGridLng(longitude).toFloat(), normalizeCoeffs[0][LNG_INDEX], normalizeCoeffs[1][LNG_INDEX]),
+                normalize(latitude, normalizeCoeffs[0][LAT_INDEX], normalizeCoeffs[1][LAT_INDEX]),
+                normalize(longitude, normalizeCoeffs[0][LNG_INDEX], normalizeCoeffs[1][LNG_INDEX]),
                 normalize(weekday.toFloat(), normalizeCoeffs[0][WEEK_INDEX], normalizeCoeffs[1][WEEK_INDEX]),
                 normalize(hour.toFloat(), normalizeCoeffs[0][HOUR_INDEX], normalizeCoeffs[1][HOUR_INDEX]),
-                normalize(findNearestMin(minutes).toFloat(), normalizeCoeffs[0][MIN_INDEX], normalizeCoeffs[1][MIN_INDEX])
+                normalize(minutes.toFloat(), normalizeCoeffs[0][MIN_INDEX], normalizeCoeffs[1][MIN_INDEX])
         )
         tf.feed("Placeholder", input, 1, 5)
-        val outputNode = "dnn/logits/BiasAdd"
+        val outputNode = "dnn/head/predictions/ExpandDims"
         val outputNodes = arrayOf(outputNode)
         tf.run(outputNodes)
-        val outputs = FloatArray(3)
+        val outputs = LongArray(1)
         tf.fetch(outputNode, outputs)
         Log.d("TF", Arrays.toString(outputs))
-        val percentTraffic = 20*outputs[0] + 40*outputs[1] + 60*outputs[2]
+        return outputs[0]
+        /*val percentTraffic = 20*outputs[0] + 40*outputs[1] + 60*outputs[2]
         return when {
             percentTraffic < 20 -> 0L
             percentTraffic < 40 -> 1L
             percentTraffic < 60 -> 2L
             else -> 3L
-        }
+        }*/
     }
 
     private fun findNearestMin(min: Int): Int {
@@ -83,6 +83,13 @@ class TFPredictor internal constructor(act: Activity) {
     }
 
     private fun normalize(value: Float, min: Float, max: Float): Float {
-        return (value - min)/(max - min)
+        var valu = value
+        if(value > max) valu = max
+        if(value < min) valu = min
+        return (valu - min)/(max - min)
+    }
+    companion object {
+
+        public val model_name: String = "nn_v1"
     }
 }

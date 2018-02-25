@@ -12,6 +12,7 @@ import android.widget.Toast
 import com.android.volley.Response
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
+import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -21,7 +22,6 @@ import java.io.FileOutputStream
 
 class SplashScreen : AppCompatActivity() {
     private val SPLASH_DISPLAY_LENGTH: Long = 500
-    private val model_name: String = "nn_v2"
     private lateinit var service: VolleyService
     private lateinit var apiController: APIController
     private lateinit var sp: SharedPreferences

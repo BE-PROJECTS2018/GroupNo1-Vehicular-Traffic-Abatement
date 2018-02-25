@@ -31,6 +31,7 @@ import com.android.volley.Response
 import com.beproject.group1.vta.R
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
+import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
 
 import kotlinx.android.synthetic.main.activity_login.*
@@ -47,7 +48,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private var isLoggingIn = false
-    private val model_name = "nn_v2"
     private lateinit var service: VolleyService
     private lateinit var apiController: APIController
 
