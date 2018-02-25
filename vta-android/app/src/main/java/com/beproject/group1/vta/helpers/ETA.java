@@ -21,13 +21,13 @@ public class ETA {
         switch(mode)
         {
             case 0:
-                return 13.8889;
+                return 11.1111; //40kmph
             case 1:
-                return 8.33333;
+                return 5.5556; //20kmph
             case 2:
-                return 2.77778;
+                return 2.7778; //10kmph
             case 3:
-                return 1.38889;
+                return 1.3889; //5kmph
         }
         return 0.0;
     }

@@ -45,7 +45,7 @@ class TFPredictor internal constructor(act: Activity) {
                 normalize(findGridLng(longitude).toFloat(), normalizeCoeffs[0][LNG_INDEX], normalizeCoeffs[1][LNG_INDEX]),
                 normalize(weekday.toFloat(), normalizeCoeffs[0][WEEK_INDEX], normalizeCoeffs[1][WEEK_INDEX]),
                 normalize(hour.toFloat(), normalizeCoeffs[0][HOUR_INDEX], normalizeCoeffs[1][HOUR_INDEX]),
-                normalize(minutes.toFloat(), normalizeCoeffs[0][MIN_INDEX], normalizeCoeffs[1][MIN_INDEX])
+                normalize(findNearestMin(minutes).toFloat(), normalizeCoeffs[0][MIN_INDEX], normalizeCoeffs[1][MIN_INDEX])
         )
         tf.feed("Placeholder", input, 1, 5)
         val outputNode = "dnn/logits/BiasAdd"
@@ -61,6 +61,11 @@ class TFPredictor internal constructor(act: Activity) {
             percentTraffic < 60 -> 2L
             else -> 3L
         }
+    }
+
+    private fun findNearestMin(min: Int): Int {
+        val t:Int = min/15
+        return t*15
     }
 
     private fun findGridLat(latitude: Float): Int {

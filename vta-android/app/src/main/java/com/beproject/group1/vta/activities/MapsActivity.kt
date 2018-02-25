@@ -389,8 +389,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             if(add) {
                 val polyLineOptions = PolylineOptions()
                 var time: Double = 0.toDouble()
+
                 for(j in 0 until decodedPath.size) {
                     c.time = Date()
+                    c.add(Calendar.SECOND, time.toInt())
                     //mMap.addMarker(MarkerOptions().position(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())))
                     val traffic = tfPredictor.predict(
                             decodedPath[j].latitude.toFloat(),
@@ -434,14 +436,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                             polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.GRAY)
                         }
                     }
+
                 }
                 route.add(mMap.addPolyline(polyLineOptions))
                 route_time.add(time)
-                Log.d("Estimated Time",""+ timeConversion((time*3600).toInt()))
+                Log.d("Estimated Time",""+ timeConversion((time).toInt()))
             }
         }
-        var x = route_time.indexOf(Collections.min(route_time))
-        Log.d("Best Route", "" + x)
+        var x=0
+        if(!route_time.isEmpty()) {
+            x = route_time.indexOf(Collections.min(route_time))
+            Log.d("Best Route", "" + x)
+        }
 
         val decodedPath = PolyUtil.decode(results.routes[x].overviewPolyline.encodedPath)
         var add = true
@@ -451,9 +457,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         }
         if(add) {
             val polyLineOptions = PolylineOptions()
+            var time: Double = 0.toDouble()
             for(i in 0 until decodedPath.size) {
                 c.time = Date()
-
+                c.add(Calendar.SECOND, time.toInt())
                 val traffic = tfPredictor.predict(
                         decodedPath[i].latitude.toFloat(),
                         decodedPath[i].longitude.toFloat(),
@@ -463,6 +470,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 when (i) {
                     0 -> {
                         val location0 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i+1].latitude, decodedPath[i+1].longitude)
+                        val distance0 = ETA.distance(decodedPath[i].latitude, decodedPath[i].longitude, location0[0], location0[1])
+                        val speed0 = ETA.speed(traffic.toInt())
+                        //Log.d("Distance 0 : " ,"" + distance0)
+                        time += distance0 / speed0
                         when (traffic) {
                             0L -> {
                                 polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
@@ -484,6 +495,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     }
                     decodedPath.size-1 -> {
                         val location1 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i-1].latitude, decodedPath[i-1].longitude)
+                        val distance1 = ETA.distance(decodedPath[i].latitude, decodedPath[i].longitude, location1[0], location1[1])
+                        val speed1 = ETA.speed(traffic.toInt())
+                        //Log.d("Distance 1 : " ,"" + distance1)
+                        time += distance1 / speed1
                         when (traffic) {
                             0L -> {
                                 polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.GREEN)
@@ -505,6 +520,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                     }
                     else -> {
                         val location2 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i-1].latitude, decodedPath[i-1].longitude)
+                        val distance2 = ETA.distance(decodedPath[i].latitude, decodedPath[i].longitude, location2[0], location2[1])
+                        val speed2 = ETA.speed(traffic.toInt())
+                        //Log.d("Distance 2 : " ,"" + distance2)
+                        time += distance2 / speed2
                         when (traffic) {
                             0L -> {
                                 polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.GREEN)
@@ -525,6 +544,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         }
 
                         val location3 = midPoint(decodedPath[i].latitude, decodedPath[i].longitude, decodedPath[i+1].latitude, decodedPath[i+1].longitude)
+                        val distance3 = ETA.distance(decodedPath[i].latitude, decodedPath[i].longitude, location3[0], location3[1])
+                        val speed3 = ETA.speed(traffic.toInt())
+                        //Log.d("Distance 3 : " ,"" + distance3)
+                        time += distance3 / speed3
                         when (traffic) {
                             0L -> {
                                 polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
@@ -577,16 +600,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         }
     }
 
-    private fun getDistanceFromLatLonInKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371.0 // Radius of the earth in km
-        val dLat = Math.toRadians(lat2 - lat1)  // deg2rad below
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return R * c
-    }
-
     private fun timeConversion(totalSeconds: Int): String {
 
         val seconds = totalSeconds % 60
@@ -595,18 +608,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         val hours = totalMinutes / 60
 
         return hours.toString() + ":" + minutes + ":" + seconds
-    }
-
-    fun calculateSpeed(traffic: Double): Int {
-
-        return if (traffic == 0.0)
-            50
-        else if (traffic == 1.0)
-            40
-        else if (traffic == 2.0)
-            20
-        else
-            5
     }
 
     private fun midPoint(lat1: Double, lon1: Double, lat2: Double, lon2: Double): List<Double> {
