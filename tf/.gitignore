@@ -2,3 +2,4 @@ venv
 data
 __pycache__
 meta
+*.csv

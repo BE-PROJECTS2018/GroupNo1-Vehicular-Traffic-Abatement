@@ -3,6 +3,8 @@ from random import shuffle
 import tensorflow as tf
 from math import cos, sin
 from pyexcel_ods import save_data
+from collections import OrderedDict
+
 latmin = 19.039645023697126
 latmax = 19.087125696060983
 lngmin = 72.88591886230472
@@ -20,7 +22,7 @@ def process_inputs(t):
     return [lat, lng, weekday, hour, minutes]
 
 def fil(t):
-    return t['hour'] > 6 and t['hour'] < 23
+    return t['hour'] > 15 and t['hour'] < 23
 
 def load_data(dir):
     print('Loading data...', end='', flush=True)
@@ -52,12 +54,14 @@ def save_csv(dir):
         # x=cos(t['lat'])*cos(t['lng'])
         # y=cos(t['lat'])*sin(t['lng'])
         # z=sin(t['lat'])
-        
-        lat = (t['lat'] - latmin)/(latmax - latmin)
-        lng = (t['lng'] - lngmin)/(lngmax - lngmin)
-        weekday = t['weekday']/6
-        hour    = t['hour']/23
-        minutes = t['min']/59
+        max = 1
+        min = -1
+        range = max - min
+        lat = (t['lat'] - latmin)/(latmax - latmin) * range + min
+        lng = (t['lng'] - lngmin)/(lngmax - lngmin) * range + min
+        weekday = t['weekday']/6 * range + min
+        hour    = (t['hour'] - 16)/(22 - 16) * range + min
+        minutes = t['min']/59 * range + min
         t = t['t']
         return [lat, lng, weekday, hour, minutes, t]
     print('Loading data...', end='', flush=True)
@@ -67,11 +71,13 @@ def save_csv(dir):
         with open(path) as json_data:
             d = json.load(json_data)
         data.extend(d)
-    # data = list(filter(fil, data))
+    data = list(filter(fil, data))
     shuffle(data)
-    csv={}
-    csv['data.csv'] = list(map(process_inputs, data))
-    save_data('data.csv', csv)
+    d = [['latitude', 'longitude', 'weekday', 'hour', 'min', 'traffic']]
+    d.extend(list(map(process_inputs, data)))
+    csv=OrderedDict([('', d)])
+    save_data('v1.csv', csv)
+    print('done')
 
 def export_model(model, model_name, num_input):
     print('Exporting model...', end='', flush=True)

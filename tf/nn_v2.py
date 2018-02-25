@@ -58,7 +58,7 @@ def load_csv(fname, do_normalize=False, save_as_csv=False, split_percent=80):
     print('done', flush=True)
     return [training_set, test_set]
 
-[training_set, test_set] = load_csv('v2.csv', do_normalize=True)
+[training_set, test_set] = load_csv('v3.csv', do_normalize=True)
 nTest = len(test_set['x'])
 num_input = 5
 num_targets = 3
