@@ -60,8 +60,8 @@ def save_csv(dir):
         lat = (t['lat'] - latmin)/(latmax - latmin) * range + min
         lng = (t['lng'] - lngmin)/(lngmax - lngmin) * range + min
         weekday = t['weekday']/6 * range + min
-        hour    = (t['hour'] - 16)/(22 - 16) * range + min
-        minutes = t['min']/59 * range + min
+        hour    = t['hour']/23 * range + min
+        minutes = (t['min']//15*15)/45 * range + min
         t = t['t']
         return [lat, lng, weekday, hour, minutes, t]
     print('Loading data...', end='', flush=True)
@@ -71,8 +71,8 @@ def save_csv(dir):
         with open(path) as json_data:
             d = json.load(json_data)
         data.extend(d)
-    data = list(filter(fil, data))
-    shuffle(data)
+    # data = list(filter(fil, data))
+    # shuffle(data)
     d = [['latitude', 'longitude', 'weekday', 'hour', 'min', 'traffic']]
     d.extend(list(map(process_inputs, data)))
     csv=OrderedDict([('', d)])

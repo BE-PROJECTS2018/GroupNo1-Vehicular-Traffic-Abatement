@@ -8,6 +8,12 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 model_name='nn_v1'
 
+def arrange(arr, ord):
+    newarr = np.zeros(arr.shape)
+    for i in range(len(ord)):
+        newarr[ord[i]] = arr[i]
+    return newarr
+
 def load_csv(fname, split_percent=80):
     print('Loading data...', end='', flush=True)
     csv = get_data(fname)[fname]
@@ -31,7 +37,7 @@ def load_csv(fname, split_percent=80):
     return [training_set, test_set, col_names]
 
 [training_set, test_set, col_names] = load_csv('v1.csv')
-batch_size=len(training_set['x'])
+batch_size=len(training_set['x']) // 2
 counts = np.unique(training_set['y'], return_counts=True)[1]
 counts.sort()
 counts = counts[::-1]
@@ -39,21 +45,18 @@ ratios = np.zeros(counts.shape)
 for i in range(counts.size):
     ratios[i] = counts[i]/sum(counts)
 print('Ratios of classes', ratios*100)
-ratios = 1 - ratios*2
+ratios = 2 - ratios*2
 print('Weights to penalize loss function', ratios)
 trweights = np.zeros(len(training_set['x']))
 for i in range(len(training_set['y'])):
     trweights[i] = ratios[training_set['y'][i]]
 
-teweights = np.zeros(len(test_set['x']))
-for i in range(len(test_set['y'])):
-    teweights[i] = ratios[test_set['y'][i]]
 # weights = tf.constant(weights)
 nTest = len(test_set['x'])
 num_input = 5
 num_classes = 4
 
-n_hidden = 5
+n_hidden = 10
 
 learning_rate = 0.2
 
@@ -150,6 +153,32 @@ accuracy_score = classifier.evaluate(input_fn=test_input_fn)#['accuracy']
 print('done')
 print(accuracy_score)
 # print("\nTrain Accuracy: {0:f}%\n".format(accuracy_score*100))
+
+new_samples = np.array(training_set['x'], dtype=np.float32)
+predict_input_fn = tf.estimator.inputs.numpy_input_fn(
+    x={"x": new_samples},
+    num_epochs=1,
+    shuffle=False)
+
+predictions = list(classifier.predict(input_fn=predict_input_fn))
+predictions = [predictions[i]["class_ids"][0]for i in range(len(predictions))]
+counts = np.unique(predictions, return_counts=True)
+counts = arrange(counts[1], counts[0])
+ratios = np.zeros(counts.shape)
+for i in range(counts.size):
+    ratios[i] = counts[i]/sum(counts)
+print('Ratios of predicted classes', ratios*100)
+
+counts = np.unique(test_set['y'], return_counts=True)[1]
+counts.sort()
+counts = counts[::-1]
+ratios = np.zeros(counts.shape)
+for i in range(counts.size):
+    ratios[i] = counts[i]/sum(counts)
+ratios = 2 - ratios*2
+teweights = np.zeros(len(test_set['x']))
+for i in range(len(test_set['y'])):
+    teweights[i] = ratios[test_set['y'][i]]
 
 # Define the test inputs
 test_input_fn = tf.estimator.inputs.numpy_input_fn(
