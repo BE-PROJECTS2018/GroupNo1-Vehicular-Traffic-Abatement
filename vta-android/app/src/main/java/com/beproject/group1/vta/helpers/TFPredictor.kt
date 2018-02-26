@@ -44,7 +44,7 @@ class TFPredictor internal constructor(act: Activity) {
                 normalize(longitude, normalizeCoeffs[0][LNG_INDEX], normalizeCoeffs[1][LNG_INDEX]),
                 normalize(weekday.toFloat(), normalizeCoeffs[0][WEEK_INDEX], normalizeCoeffs[1][WEEK_INDEX]),
                 normalize(hour.toFloat(), normalizeCoeffs[0][HOUR_INDEX], normalizeCoeffs[1][HOUR_INDEX]),
-                normalize(minutes.toFloat(), normalizeCoeffs[0][MIN_INDEX], normalizeCoeffs[1][MIN_INDEX])
+                normalize(findNearestMin(minutes).toFloat(), normalizeCoeffs[0][MIN_INDEX], normalizeCoeffs[1][MIN_INDEX])
         )
         tf.feed("Placeholder", input, 1, 5)
         val outputNode = "dnn/head/predictions/ExpandDims"
