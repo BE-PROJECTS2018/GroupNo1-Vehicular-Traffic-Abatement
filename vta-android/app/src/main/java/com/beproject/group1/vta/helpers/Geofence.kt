@@ -8,9 +8,13 @@ import android.util.Log
 class Geofence {
     companion object {
         // All geo region polygons being served should be initialized as polygons array here
-        private val polygons = arrayOf(
+        val polygons = arrayOf(
                 Polygon(
-                        x=doubleArrayOf(19.039645023697126, 19.039645023697126, 19.087125696060983, 19.087125696060983),
+                        x=doubleArrayOf(19.039645023697126, 19.039645023697126, 19.06398378548459, 19.06398378548459),
+                        y=doubleArrayOf(72.88591886230472, 72.92025113769535, 72.92025113769535 ,72.88591886230472)
+                ),
+                Polygon(
+                        x=doubleArrayOf(19.06398378548459, 19.06398378548459, 19.087125696060983, 19.087125696060983),
                         y=doubleArrayOf(72.88591886230472, 72.92025113769535, 72.92025113769535 ,72.88591886230472)
                 )
         )

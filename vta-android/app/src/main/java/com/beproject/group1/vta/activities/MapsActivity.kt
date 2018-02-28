@@ -24,6 +24,7 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import kotlinx.android.synthetic.main.activity_maps.*
 import android.os.SystemClock
+import android.support.v4.content.ContextCompat
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
 import com.beproject.group1.vta.helpers.ETA
@@ -321,6 +322,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 }
             }
         }
+        for(polygon in Geofence.polygons) {
+            gmap.addPolygon(PolygonOptions()
+                    .strokeWidth(1f)
+                    .strokeColor(ContextCompat.getColor(applicationContext, R.color.geoFenceBorder))
+                    .fillColor(ContextCompat.getColor(applicationContext, R.color.geoFenceColor))
+                    .add(LatLng(polygon.x[0], polygon.y[0]))
+                    .add(LatLng(polygon.x[1], polygon.y[1]))
+                    .add(LatLng(polygon.x[2], polygon.y[2]))
+                    .add(LatLng(polygon.x[3], polygon.y[3])))
+        }
         if(mayRequestLocation() && mylocation != null) {
             initMarker()
         }
@@ -476,20 +487,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         time += distance0 / speed0
                         when (traffic) {
                             0L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
-                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.green))
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(ContextCompat.getColor(applicationContext, R.color.green))
                             }
                             1L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
-                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.orange))
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(ContextCompat.getColor(applicationContext, R.color.orange))
                             }
                             2L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
-                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.RED)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.red))
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(ContextCompat.getColor(applicationContext, R.color.red))
                             }
                             3L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
-                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
+                                polyLineOptions.add(LatLng(location0[0], location0[1])).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
                             }
                         }
                     }
@@ -501,20 +512,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         time += distance1 / speed1
                         when (traffic) {
                             0L -> {
-                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.GREEN)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(ContextCompat.getColor(applicationContext, R.color.green))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.green))
                             }
                             1L -> {
-                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.YELLOW)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(ContextCompat.getColor(applicationContext, R.color.orange))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.orange))
                             }
                             2L -> {
-                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.RED)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(ContextCompat.getColor(applicationContext, R.color.red))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.red))
                             }
                             3L -> {
-                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(Color.BLACK)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(location1[0], location1[1])).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
                             }
                         }
                     }
@@ -526,20 +537,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         time += distance2 / speed2
                         when (traffic) {
                             0L -> {
-                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.GREEN)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(ContextCompat.getColor(applicationContext, R.color.green))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.green))
                             }
                             1L -> {
-                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.YELLOW)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(ContextCompat.getColor(applicationContext, R.color.orange))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.orange))
                             }
                             2L -> {
-                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.RED)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(ContextCompat.getColor(applicationContext, R.color.red))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.red))
                             }
                             3L -> {
-                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(Color.BLACK)
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(location2[0], location2[1])).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
                             }
                         }
 
@@ -550,20 +561,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         time += distance3 / speed3
                         when (traffic) {
                             0L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.GREEN)
-                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.GREEN)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.green))
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(ContextCompat.getColor(applicationContext, R.color.green))
                             }
                             1L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.YELLOW)
-                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.YELLOW)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.orange))
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(ContextCompat.getColor(applicationContext, R.color.orange))
                             }
                             2L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.RED)
-                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.RED)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.red))
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(ContextCompat.getColor(applicationContext, R.color.red))
                             }
                             3L -> {
-                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(Color.BLACK)
-                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(Color.BLACK)
+                                polyLineOptions.add(LatLng(decodedPath[i].latitude, decodedPath[i].longitude)).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
+                                polyLineOptions.add(LatLng(location3[0], location3[1])).color(ContextCompat.getColor(applicationContext, R.color.darkRed))
                             }
                         }
                     }
