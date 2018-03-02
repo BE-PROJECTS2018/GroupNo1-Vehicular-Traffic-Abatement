@@ -2,7 +2,7 @@ import json, glob
 from random import shuffle
 import tensorflow as tf
 from math import cos, sin
-from pyexcel_ods import save_data
+from pyexcel_ods import get_data, save_data
 from collections import OrderedDict
 
 latmin = 19.039645023697126
@@ -48,6 +48,27 @@ def load_data(dir):
         test_set['y'].append(y[i])
     print('done')
     return [training_set, test_set]
+
+def merge_csvs(n):
+    files = []
+    for i in range(n):
+        f = input('Enter filename: ')
+        files.append(f)
+    data = []
+    for f in files:
+        d = get_data(f)[f]
+        data.extend(d)
+    shuffle(data)
+    shuffle(data)
+    shuffle(data)
+    col_names = []
+    for i in range(len(data[0])):
+        c = input('Enter column name: ')
+        col_names.append(c)
+    mdata = [col_names]
+    mdata.extend(data)
+    mcsv = OrderedDict([('', mdata)])
+    save_data('v4.csv', mcsv)
 
 def save_csv(dir):
     def process_inputs(t):
