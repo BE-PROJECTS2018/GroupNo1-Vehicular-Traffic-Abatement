@@ -21,7 +21,7 @@ with open('config.json', 'r') as c:
 start = timeit.default_timer()
 count = 0
 done = 0
-vicinity = 13
+vicinity = 35
 images = glob.glob('../ss gen/images/**/*.png')
 err_count = 0
 total = len(images)
