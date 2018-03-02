@@ -21,7 +21,7 @@ with open('config.json', 'r') as c:
 start = timeit.default_timer()
 count = 0
 done = 0
-vicinity = 13
+vicinity = 35
 images = glob.glob('../ss gen/images/**/*.png')
 err_count = 0
 total = len(images)
@@ -89,7 +89,7 @@ for image in images:
                 yE = 800
             else:
                 yE = lngI + vicinity
-            if next((d for d in gdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            if next((d for d in gdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 100), None) == None:
                 gdata[latI][lngI] = {
                     'lat':lat, 
                     'lng':lng, 
@@ -138,7 +138,7 @@ for image in images:
                 yE = 800
             else:
                 yE = lngI + vicinity
-            if next((d for d in odata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            if next((d for d in odata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 60), None) == None:
                 odata[latI][lngI] = {
                     'lat':lat, 
                     'lng':lng, 
@@ -187,7 +187,7 @@ for image in images:
                 yE = 800
             else:
                 yE = lngI + vicinity
-            if next((d for d in rdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            if next((d for d in rdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 20), None) == None:
                 rdata[latI][lngI] = {
                     'lat':lat, 
                     'lng':lng, 
@@ -236,7 +236,7 @@ for image in images:
                 yE = 800
             else:
                 yE = lngI + vicinity
-            if next((d for d in drdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 50), None) == None:
+            if next((d for d in drdata[xS:xE, yS:yE].flatten().tolist() if d != None and vincenty((d['lat'], d['lng']), (lat, lng)).m <= 10), None) == None:
                 drdata[latI][lngI] = {
                     'lat':lat, 
                     'lng':lng, 

@@ -19,7 +19,6 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.TextView
 
-import java.util.ArrayList
 import android.Manifest.permission.READ_CONTACTS
 import android.content.*
 import android.support.v7.app.AlertDialog
@@ -27,13 +26,19 @@ import android.util.Log
 import android.util.Patterns
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
+import com.android.volley.Response
 import com.beproject.group1.vta.R
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
+import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
 
 import kotlinx.android.synthetic.main.activity_login.*
 import org.json.JSONObject
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * A login screen that offers login via email/password.
@@ -176,9 +181,10 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             params.put("email", emailStr)
             params.put("password", passwordStr)
             apiController.login(params) {response ->
-                isLoggingIn = false
-                showProgress(false)
+
                 if(response == null) {
+                    isLoggingIn = false
+                    showProgress(false)
                     password.error = getString(R.string.error_incorrect_password)
                     password.requestFocus()
                 } else {
@@ -188,21 +194,97 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                         Log.d("RESP", key)
                         spe.putString(key, response.getString(key))
                     }
+                    spe.putString("email", emailStr)
+                    spe.putString("password", passwordStr)
                     spe.apply()
-                    startActivity(Intent(this@LoginActivity, MapsActivity::class.java))
+                    maybeSync(sp)
                 }
 
             }
         }
     }
 
+    private fun maybeSync(sp: SharedPreferences) {
+        val accessToken = sp.getString("id", null)
+        val fmtime = sp.getString("fmtime", null)
+        val intent = Intent(this@LoginActivity, MapsActivity::class.java)
+        val tz = TimeZone.getTimeZone("UTC")
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        sdf.timeZone = tz
+        apiController.getFileInfo("freeze_$model_name.pb", accessToken) { response ->
+            if(response == null) {
+                Toast.makeText(applicationContext, getString(R.string.offline_alert), Toast.LENGTH_SHORT).show()
+                this@LoginActivity.startActivity(intent)
+                this@LoginActivity.finish()
+            } else {
+                val newfmtime = response.getString("mtime")
+                if(fmtime == null) {
+                    val spe = sp.edit()
+                    spe.putString("fmtime", newfmtime)
+                    spe.apply()
+                    syncFilesAndLaunchApp(intent, accessToken)
+                } else {
+                    val date1 = sdf.parse(fmtime)
+                    val date2 = sdf.parse(newfmtime)
+                    if (date1.before(date2)) {
+                        val spe = sp.edit()
+                        spe.putString("fmtime", newfmtime)
+                        spe.apply()
+                        syncFilesAndLaunchApp(intent, accessToken)
+                    } else {
+                        this@LoginActivity.startActivity(intent)
+                        this@LoginActivity.finish()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun syncFilesAndLaunchApp(intent: Intent, accessToken: String) {
+        apiController.downloadFile("freeze_$model_name.pb", accessToken, Response.Listener<ByteArray> { response ->
+            try {
+                if (response != null) {
+                    val outputStream: FileOutputStream
+                    val name = "freeze_$model_name.pb"
+                    outputStream = openFileOutput(name, Context.MODE_PRIVATE)
+                    outputStream.write(response)
+                    outputStream.close()
+                    Toast.makeText(this, "PB Download complete.", Toast.LENGTH_LONG).show()
+                    apiController.downloadFile("normalize_$model_name.csv", accessToken, Response.Listener<ByteArray> { response ->
+                        try {
+                            if (response != null) {
+
+                                val outputStream: FileOutputStream
+                                val name = "normalize_$model_name.csv"
+                                outputStream = openFileOutput(name, Context.MODE_PRIVATE)
+                                outputStream.write(response)
+                                outputStream.close()
+                                Toast.makeText(this, "CSV Download complete.", Toast.LENGTH_LONG).show()
+                                this@LoginActivity.startActivity(intent)
+                                this@LoginActivity.finish()
+                            }
+                        } catch (e: Exception) {
+                            Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD CSV FILE")
+                            e.printStackTrace()
+                        }
+                    }, Response.ErrorListener { error ->
+                        error.printStackTrace()
+                    })
+                }
+            } catch (e: Exception) {
+                Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD PB FILE")
+                e.printStackTrace()
+            }
+        }, Response.ErrorListener { error ->
+            error.printStackTrace()
+        })
+    }
+
     private fun isEmailValid(email: String): Boolean {
-        //TODO: Replace this with your own logic
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
     private fun isPasswordValid(password: String): Boolean {
-        //TODO: Replace this with your own logic
         return password.length > 4
     }
 
@@ -214,34 +296,27 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            val shortAnimTime = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+        val shortAnimTime = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
 
-            login_form.visibility = if (show) View.GONE else View.VISIBLE
-            login_form.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha((if (show) 0 else 1).toFloat())
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            login_form.visibility = if (show) View.GONE else View.VISIBLE
-                        }
-                    })
+        login_form.visibility = if (show) View.GONE else View.VISIBLE
+        login_form.animate()
+                .setDuration(shortAnimTime)
+                .alpha((if (show) 0 else 1).toFloat())
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        login_form.visibility = if (show) View.GONE else View.VISIBLE
+                    }
+                })
 
-            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-            login_progress.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha((if (show) 1 else 0).toFloat())
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-                        }
-                    })
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-            login_form.visibility = if (show) View.GONE else View.VISIBLE
-        }
+        login_progress.visibility = if (show) View.VISIBLE else View.GONE
+        login_progress.animate()
+                .setDuration(shortAnimTime)
+                .alpha((if (show) 1 else 0).toFloat())
+                .setListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        login_progress.visibility = if (show) View.VISIBLE else View.GONE
+                    }
+                })
     }
 
     override fun onCreateLoader(i: Int, bundle: Bundle?): Loader<Cursor> {
