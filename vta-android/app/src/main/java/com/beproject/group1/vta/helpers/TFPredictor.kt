@@ -90,6 +90,6 @@ class TFPredictor internal constructor(act: Activity) {
     }
     companion object {
 
-        public val model_name: String = "nn_v1"
+        public val model_name: String = "nn_v4"
     }
 }
