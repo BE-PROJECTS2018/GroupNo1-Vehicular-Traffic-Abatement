@@ -156,12 +156,12 @@ print(accuracy_score)
 
 new_samples = np.array(training_set['x'], dtype=np.float32)
 predict_input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={"x": new_samples},
+    x={"x": new_samples, 'weight': trweights},
     num_epochs=1,
     shuffle=False)
 
 predictions = list(classifier.predict(input_fn=predict_input_fn))
-predictions = [predictions[i]["class_ids"][0]for i in range(len(predictions))]
+predictions = [predictions[i]["class_ids"][0] for i in range(len(predictions))]
 counts = np.unique(predictions, return_counts=True)
 counts = arrange(counts[1], counts[0])
 ratios = np.zeros(counts.shape)
