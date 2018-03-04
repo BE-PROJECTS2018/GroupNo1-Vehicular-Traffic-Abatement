@@ -112,6 +112,7 @@ def export_model(model, model_name, num_input):
     print('done')
 
 def confusion_matrix(labels, predicted):
+    # row is predicted as column
     labels = np.array(labels)
     predicted = np.array(predicted)
     l1 = len(labels)
@@ -122,4 +123,4 @@ def confusion_matrix(labels, predicted):
     cfmat = np.zeros((n_classes, n_classes),dtype=int)
     for i in range(l1):
         cfmat[labels[i]][predicted[i]] += 1
-    print('confusion matrix', cfmat)
+    print('confusion matrix', cfmat, sep='\n')
