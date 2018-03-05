@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity
 import android.app.LoaderManager.LoaderCallbacks
 import android.database.Cursor
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -21,7 +20,6 @@ import android.widget.TextView
 
 import android.Manifest.permission.READ_CONTACTS
 import android.content.*
-import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.util.Patterns
 import android.view.Menu
@@ -33,12 +31,15 @@ import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
 import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
+import com.beproject.group1.vta.helpers.WekaPredictor
 
 import kotlinx.android.synthetic.main.activity_login.*
 import org.json.JSONObject
-import java.io.FileOutputStream
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 
 /**
  * A login screen that offers login via email/password.
@@ -197,11 +198,116 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                     spe.putString("email", emailStr)
                     spe.putString("password", passwordStr)
                     spe.apply()
-                    maybeSync(sp)
+                    wekaSync(sp)
+//                    maybeSync(sp)
                 }
 
             }
         }
+    }
+
+    private fun wekaSync(sp: SharedPreferences) {
+        val accessToken = sp.getString("id", null)
+        val wmtime = sp.getString("wmtime", null)
+        val intent = Intent(this@LoginActivity, MapsActivity::class.java)
+        val tz = TimeZone.getTimeZone("UTC")
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        sdf.timeZone = tz
+        apiController.getFileInfo("${WekaPredictor.model_name}.zip", accessToken){ response ->
+            if(response == null) {
+                Toast.makeText(applicationContext, getString(R.string.offline_alert), Toast.LENGTH_SHORT).show()
+                this@LoginActivity.startActivity(intent)
+                this@LoginActivity.finish()
+            } else {
+                val newwmtime = response.getString("mtime")
+                if(wmtime == null) {
+                    val spe = sp.edit()
+                    spe.putString("wmtime", newwmtime)
+                    spe.apply()
+                    syncWekaAndLaunchApp(intent, accessToken)
+                } else {
+                    val date1 = sdf.parse(wmtime)
+                    val date2 = sdf.parse(newwmtime)
+                    if (date1.before(date2)) {
+                        val spe = sp.edit()
+                        spe.putString("wmtime", newwmtime)
+                        spe.apply()
+                        syncWekaAndLaunchApp(intent, accessToken)
+                    } else {
+                        this@LoginActivity.startActivity(intent)
+                        this@LoginActivity.finish()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun syncWekaAndLaunchApp(intent: Intent, accessToken: String) {
+        apiController.downloadFile("${WekaPredictor.model_name}.zip", accessToken, Response.Listener<ByteArray> { response ->
+            try {
+                if (response != null) {
+                    val outputStream: FileOutputStream
+                    val name = "${WekaPredictor.model_name}.zip"
+                    outputStream = openFileOutput(name, Context.MODE_PRIVATE)
+                    outputStream.write(response)
+                    outputStream.close()
+                    Toast.makeText(this, "WEKA Download complete.", Toast.LENGTH_LONG).show()
+                    val b = unpackZip("${filesDir.absolutePath}/", name)
+                    Toast.makeText(this, "WEKA unzip: $b.", Toast.LENGTH_LONG).show()
+                    this@LoginActivity.startActivity(intent)
+                    this@LoginActivity.finish()
+                }
+            } catch (e: Exception) {
+                Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD WEKA FILE")
+                e.printStackTrace()
+            }
+        }, Response.ErrorListener { error ->
+            error.printStackTrace()
+        })
+    }
+
+    private fun unpackZip(path: String, zipname: String): Boolean {
+        val `is`: InputStream
+        val zis: ZipInputStream
+        try {
+            var filename: String
+            `is` = FileInputStream(path + zipname)
+            zis = ZipInputStream(BufferedInputStream(`is`))
+            var ze: ZipEntry? = zis.nextEntry
+            val buffer = ByteArray(1024)
+            var count: Int
+            while (ze != null) {
+                // zapis do souboru
+                filename = ze.getName()
+
+                // Need to create directories if not exists, or
+                // it will generate an Exception...
+                if (ze.isDirectory()) {
+                    val fmd = File(path + filename)
+                    fmd.mkdirs()
+                    continue
+                }
+
+                val fout = FileOutputStream(path + filename)
+
+                // cteni zipu a zapis
+                count = zis.read(buffer)
+                while (count != -1) {
+                    fout.write(buffer, 0, count)
+                    count = zis.read(buffer)
+                }
+
+                fout.close()
+                zis.closeEntry()
+                ze = zis.nextEntry
+            }
+
+            zis.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return false
+        }
+        return true
     }
 
     private fun maybeSync(sp: SharedPreferences) {

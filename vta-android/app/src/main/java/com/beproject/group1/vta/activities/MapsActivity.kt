@@ -30,6 +30,7 @@ import com.beproject.group1.vta.R
 import com.beproject.group1.vta.helpers.ETA
 import com.beproject.group1.vta.helpers.Geofence
 import com.beproject.group1.vta.helpers.TFPredictor
+import com.beproject.group1.vta.helpers.WekaPredictor
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
@@ -385,6 +386,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
         val c = Calendar.getInstance()
         val tfPredictor = TFPredictor(this)
+        val wekaPredictor = WekaPredictor(this)
         Log.d("Total routes", ""+results.routes.size)
         for(i in 0 until route.size)
         {
@@ -418,11 +420,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                             c.get(Calendar.DAY_OF_WEEK) - 1,
                             c.get(Calendar.HOUR_OF_DAY),
                             c.get(Calendar.MINUTE))
+                    /*val traffic = wekaPredictor.predict(
+                            decodedPath[j].latitude,
+                            decodedPath[j].longitude,
+                            (c.get(Calendar.DAY_OF_WEEK) - 1).toDouble(),
+                            c.get(Calendar.HOUR_OF_DAY).toDouble(),
+                            c.get(Calendar.MINUTE).toDouble())*/
                     when (j) {
                         0 -> {
                             val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
                             val distance0 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location0.latitude, location0.longitude)
-                            val speed0 = ETA.speed(traffic.toInt())
+                            val speed0 = ETA.speed(traffic!!.toInt())
                             //Log.d("Distance 0 : " ,"" + distance0)
                             time += distance0 / speed0
                             t.add(addSegment(traffic, decodedPath[j], location0))
@@ -430,7 +438,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         decodedPath.size-1 -> {
                             val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
                             val distance1 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location1.latitude, location1.longitude)
-                            val speed1 = ETA.speed(traffic.toInt())
+                            val speed1 = ETA.speed(traffic!!.toInt())
                             //Log.d("Distance 1 : " ,"" + distance1)
                             time += distance1 / speed1
                             t.add(addSegment(traffic, location1, decodedPath[j]))
@@ -438,7 +446,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         else -> {
                             val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
                             val distance2 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location2.latitude, location2.longitude)
-                            val speed2 = ETA.speed(traffic.toInt())
+                            val speed2 = ETA.speed(traffic!!.toInt())
                             //Log.d("Distance 2 : " ,"" + distance2)
                             time += distance2 / speed2
                             t.add(addSegment(traffic, location2, decodedPath[j]))
