@@ -56,8 +56,9 @@ def process_inputs_as_hash(t):
     weekday = t['weekday']#/6 * range + min
     hour    = t['hour']#/23 * range + min
     minutes = (t['min']//15*15)#/45 * range + min
+    seconds = int(weekday)*24*60*60 + int(hour)*60*60 + int(minutes)*60
     t = t['t']
-    return [hash, weekday, hour, minutes, t]
+    return [hash, weekday, hour, minutes, seconds, t]
 
 def save_csv(dir):
     print('Loading data...', end='', flush=True)
@@ -128,13 +129,13 @@ def save_csvas_hash(dir):
         data.extend(d)
     # d1 = list(filter(fil1821, data))
     # d=[]
-    cols = ['geohash', 'weekday', 'hour', 'min', 'traffic']
+    cols = ['geohash', 'weekday', 'hour', 'min', 'seconds', 'traffic']
     # d.extend(list(map(process_inputs_as_hash, d1)))
     # csv=OrderedDict([('', d)])
     # save_data('v1-1-geohash.csv', csv)
     ranges = [3,6,9,12,15,18,21,23]
     fname = 'v1-1-geohash-0{}.csv'.format(ranges[0])
-    ndata = list(filter(lambda t: t['hour'] >= -1 and t['hour'] <=ranges[0], data))
+    ndata = list(filter(lambda t: t['hour'] > -1 and t['hour'] <=ranges[0], data))
     d = [cols[:]]
     d.extend(list(map(process_inputs_as_hash, ndata)))
     csv = OrderedDict([('', d)])

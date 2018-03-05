@@ -44,7 +44,9 @@ ratios = np.zeros(counts.shape)
 for i in range(counts.size):
     ratios[i] = counts[i]/sum(counts)
 print('Ratios of classes', ratios*100)
-ratios = 1 - ratios
+m = max(counts)
+for i in range(counts.size):
+    ratios[i] = m/counts[i]
 print('Weights to penalize loss function', ratios)
 trweights = np.zeros(len(training_set['x']))
 for i in range(len(training_set['y'])):
@@ -62,69 +64,11 @@ learning_rate = 0.2
 num_steps=100
 
 feature_columns = [
-    tf.feature_column.embedding_column(tf.feature_column.categorical_column_with_hash_bucket('geohash', hash_bucket_size=56714), dimension=16),
+    tf.feature_column.embedding_column(tf.feature_column.categorical_column_with_hash_bucket('geohash', hash_bucket_size=44137), dimension=int(44137**0.25)),
     tf.feature_column.numeric_column('weekday'),
     tf.feature_column.numeric_column('hours'),
     tf.feature_column.numeric_column('minutes')
     ]
-
-def my_model(features, labels, mode, params):
-    #Input layer
-    net = tf.feature_column.input_layer(features, params['feature_columns'])
-    
-    #Prepare all hidden layers
-    for units in params['hidden_units']:
-        net = tf.layers.dense(net, units=units, activation=tf.sigmoid)
-    
-    # Compute logits (1 per class).
-    logits = tf.layers.dense(net, params['n_classes'], activation=None)
-    # Compute predictions.
-    predicted_classes = tf.argmax(logits, 1)
-    if mode == tf.estimator.ModeKeys.PREDICT:
-        predictions = {
-            'class_ids': predicted_classes,
-            'probabilities': tf.nn.softmax(logits),
-            'logits': logits,
-        }
-        return tf.estimator.EstimatorSpec(mode, predictions=predictions)
-    
-    Tweights = tf.constant(trweights)
-    # Compute loss.
-    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits, weights=Tweights)
-    
-    # class_weight = tf.constant([ratios])
-    # weight_per_label = tf.transpose( tf.matmul(labels32
-    #                        , tf.transpose(class_weight)) )
-
-    # xent = tf.mul(weight_per_label
-    #      , tf.nn.sparse_softmax_cross_entropy_with_logits(logits, labels, name="xent_raw")) #shape [1, batch_size]
-    # loss = tf.reduce_mean(xent) #shape 1
-    # Compute evaluation metrics.
-    accuracy = tf.metrics.accuracy(labels=labels,
-                                   predictions=predicted_classes,
-                                   name='acc_op')
-    metrics = {'accuracy': accuracy}
-    tf.summary.scalar('accuracy', accuracy[1])
-
-    if mode == tf.estimator.ModeKeys.EVAL:
-        return tf.estimator.EstimatorSpec(
-            mode, loss=loss, eval_metric_ops=metrics)
-
-    # Create training op.
-    assert mode == tf.estimator.ModeKeys.TRAIN
-
-    optimizer = tf.train.AdagradOptimizer(learning_rate=learning_rate)
-    train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
-
-# classifier = tf.estimator.Estimator(
-#     model_dir='./meta/{}_model'.format(model_name),
-#     model_fn=my_model,
-#     params={
-#         'feature_columns': feature_columns,
-#         'hidden_units': [n_hidden, n_hidden],
-#         'n_classes': num_classes,
-#     })
 
 classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
                                 hidden_units=[n_hidden, n_hidden, n_hidden],
@@ -191,7 +135,10 @@ counts = arrange(counts[1], counts[0])
 ratios = np.zeros(counts.shape)
 for i in range(counts.size):
     ratios[i] = counts[i]/sum(counts)
-ratios = 1 - ratios
+print('Ratios of test set classes', ratios)
+m = max(counts)
+for i in range(counts.size):
+    ratios[i] = m/counts[i]
 teweights = np.zeros(len(test_set['x']))
 for i in range(len(test_set['y'])):
     teweights[i] = ratios[test_set['y'][i]]
@@ -235,8 +182,11 @@ print('Ratios of predicted classes', ratios*100)
 print('Exporting model...', end='', flush=True)
 # Export trained model
 def serving_input_receiver_fn():
-    inputs = {"x": tf.placeholder(shape=[None, num_input], dtype=tf.float32)}
+    inputs = {"geohash": tf.placeholder(shape=[None, 1], dtype=tf.string),
+    "weekday": tf.placeholder(shape=[None, 1], dtype=tf.float32),
+    "hours": tf.placeholder(shape=[None, 1], dtype=tf.float32),
+    "minutes": tf.placeholder(shape=[None, 1], dtype=tf.float32)}
     return tf.estimator.export.ServingInputReceiver(inputs, inputs)
 export_dir='meta/{}_export'.format(model_name)
-model.export_savedmodel(export_dir_base=export_dir, serving_input_receiver_fn=serving_input_receiver_fn)
+classifier.export_savedmodel(export_dir_base=export_dir, serving_input_receiver_fn=serving_input_receiver_fn)
 print('done')
