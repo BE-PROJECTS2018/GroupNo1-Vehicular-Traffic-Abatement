@@ -13,15 +13,16 @@ import android.widget.Toast
 import com.android.volley.Response
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
+import com.beproject.group1.vta.helpers.ExtraTreesClassifier
 import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
-import com.beproject.group1.vta.helpers.WekaPredictor
 import kotlinx.android.synthetic.main.activity_splash_screen.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
-import java.nio.file.Files.isDirectory
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -74,12 +75,12 @@ class SplashScreen : AppCompatActivity() {
                             }
                             spe.apply()
 //                            maybeSync()
-                            wekaSync()
+                            sklearnSync()
                         }
                     }
                 } else {
 //                    maybeSync()
-                    wekaSync()
+                    sklearnSync()
                 }
             } else {
                 val intent = Intent(this@SplashScreen, LoginActivity::class.java)
@@ -89,33 +90,33 @@ class SplashScreen : AppCompatActivity() {
         }
     }
 
-    private fun wekaSync() {
+    private fun sklearnSync() {
         val accessToken = sp.getString("id", null)
-        val wmtime = sp.getString("wmtime", null)
+        val smtime = sp.getString("smtime", null)
         val intent = Intent(this@SplashScreen, MapsActivity::class.java)
         val tz = TimeZone.getTimeZone("UTC")
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         sdf.timeZone = tz
-        apiController.getFileInfo("${WekaPredictor.model_name}.zip", accessToken){response ->
+        apiController.getFileInfo("${ExtraTreesClassifier.model_name}.zip", accessToken){response ->
             if(response == null) {
                 Toast.makeText(applicationContext, getString(R.string.offline_alert), Toast.LENGTH_SHORT).show()
                 this@SplashScreen.startActivity(intent)
                 this@SplashScreen.finish()
             } else {
-                val newwmtime = response.getString("mtime")
-                if(wmtime == null) {
+                val newsmtime = response.getString("mtime")
+                if(smtime == null) {
                     val spe = sp.edit()
-                    spe.putString("wmtime", newwmtime)
+                    spe.putString("smtime", newsmtime)
                     spe.apply()
-                    syncWekaAndLaunchApp(intent, accessToken)
+                    syncSklearnAndLaunchApp(intent, accessToken)
                 } else {
-                    val date1 = sdf.parse(wmtime)
-                    val date2 = sdf.parse(newwmtime)
+                    val date1 = sdf.parse(smtime)
+                    val date2 = sdf.parse(newsmtime)
                     if (date1.before(date2)) {
                         val spe = sp.edit()
-                        spe.putString("wmtime", newwmtime)
+                        spe.putString("smtime", newsmtime)
                         spe.apply()
-                        syncWekaAndLaunchApp(intent, accessToken)
+                        syncSklearnAndLaunchApp(intent, accessToken)
                     } else {
                         this@SplashScreen.startActivity(intent)
                         this@SplashScreen.finish()
@@ -125,25 +126,53 @@ class SplashScreen : AppCompatActivity() {
         }
     }
 
-    private fun syncWekaAndLaunchApp(intent: Intent, accessToken: String) {
+    private fun syncSklearnAndLaunchApp(intent: Intent, accessToken: String) {
         splash_message.visibility = View.VISIBLE
-        apiController.downloadFile("${WekaPredictor.model_name}.zip", accessToken, Response.Listener<ByteArray> {response ->
+        apiController.downloadFile("${ExtraTreesClassifier.model_name}.zip", accessToken, Response.Listener<ByteArray> { response ->
             try {
                 if (response != null) {
                     val outputStream: FileOutputStream
-                    val name = "${WekaPredictor.model_name}.zip"
+                    val name = "${ExtraTreesClassifier.model_name}.zip"
                     outputStream = openFileOutput(name, Context.MODE_PRIVATE)
                     outputStream.write(response)
                     outputStream.close()
-                    Toast.makeText(this, "WEKA Download complete.", Toast.LENGTH_LONG).show()
-                    val b = unpackZip("${filesDir.absolutePath}/", name)
-                    Toast.makeText(this, "WEKA unzip: $b.", Toast.LENGTH_LONG).show()
-                    splash_message.visibility = View.GONE
-                    this@SplashScreen.startActivity(intent)
-                    this@SplashScreen.finish()
+                    Toast.makeText(this, "Model Download complete.", Toast.LENGTH_LONG).show()
+                    doAsync {
+                        val b = unpackZip("${filesDir.absolutePath}/", name)
+                        uiThread {
+                            Toast.makeText(applicationContext, "Model unzip: $b.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    apiController.downloadFile("${ExtraTreesClassifier.map_prefix}-map.zip", accessToken, Response.Listener<ByteArray> {res ->
+                        try {
+                            if (res != null) {
+                                val os: FileOutputStream
+                                val zname = "${ExtraTreesClassifier.map_prefix}-map.zip"
+                                os = openFileOutput(zname, Context.MODE_PRIVATE)
+                                os.write(res)
+                                os.close()
+                                Toast.makeText(this, "Mapping Download complete.", Toast.LENGTH_LONG).show()
+                                doAsync {
+                                    val zb = unpackZip("${filesDir.absolutePath}/", zname)
+                                    uiThread {
+                                        Toast.makeText(applicationContext, "Mapping unzip: $zb.", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                                splash_message.visibility = View.GONE
+                                this@SplashScreen.startActivity(intent)
+                                this@SplashScreen.finish()
+                            }
+                        } catch (e: Exception) {
+                            Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD MAP FILE")
+                            e.printStackTrace()
+                        }
+                    }, Response.ErrorListener { err ->
+                        err.printStackTrace()
+                    })
+                    
                 }
             } catch (e: Exception) {
-                Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD WEKA FILE")
+                Log.d("SYNC_ERROR", "UNABLE TO DOWNLOAD MODEL FILE")
                 e.printStackTrace()
             }
         }, Response.ErrorListener { error ->
@@ -188,6 +217,12 @@ class SplashScreen : AppCompatActivity() {
             }
 
             zis.close()
+            val f = File(path+zipname)
+            if(f.delete()) {
+                Log.d("ZIP", "deleted zip")
+            } else {
+                Log.d("ZIP", "failed to delete zip")
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             return false

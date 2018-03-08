@@ -5,7 +5,6 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Color
@@ -32,8 +31,8 @@ import com.beproject.group1.vta.R
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.ETA
 import com.beproject.group1.vta.helpers.Geofence
+import com.beproject.group1.vta.helpers.SklearnPredictor
 import com.beproject.group1.vta.helpers.TFPredictor
-import com.beproject.group1.vta.helpers.WekaPredictor
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
@@ -53,6 +52,8 @@ import com.google.maps.model.DirectionsResult
 import com.google.maps.model.DirectionsRoute
 import com.google.maps.model.GeocodingResult
 import com.google.maps.model.TravelMode
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import org.joda.time.DateTime
 import java.io.IOException
 import java.util.*
@@ -92,6 +93,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private var hasSensors: Boolean = false
 
     private var timeBar: Snackbar? = null
+
+    private lateinit var sklearnPredictor: SklearnPredictor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -172,6 +175,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         matrixR = FloatArray(9)
         matrixI = FloatArray(9)
         matrixValues = FloatArray(3)
+
+        sklearnPredictor = SklearnPredictor(this)
 
         my_location.setOnClickListener({_ ->
 
@@ -353,7 +358,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             initMarker()
         }
         Handler().postDelayed({
-            gmap.setPadding(0, map_bar_layout.height + 60, 0, 0)
+            gmap.setPadding(0,map_bar_layout.height + 60,0,logout.height+40)
         }, 100)
     }
 
@@ -399,8 +404,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
 
         val c = Calendar.getInstance()
-        val tfPredictor = TFPredictor(this)
+//        val tfPredictor = TFPredictor(this)
 //        val wekaPredictor = WekaPredictor(this)
+
         Log.d("Total routes", ""+results.routes.size)
         for(i in 0 until route.size)
         {
@@ -410,6 +416,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         }
         route.clear()
         val route_time = ArrayList<Double>()
+        val route_lengths = ArrayList<Double>()
         val routeInFence = ArrayList<Boolean>()
         for(i in 0 until results.routes.size) {
             val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
@@ -423,60 +430,66 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 val t = ArrayList<Polyline>()
                 routeInFence.add(true)
                 var time: Double = 0.toDouble()
-
+                var dist = 0.toDouble()
                 for(j in 0 until decodedPath.size) {
                     c.time = Date()
                     c.add(Calendar.SECOND, time.toInt())
                     //mMap.addMarker(MarkerOptions().position(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())))
-                    val traffic = tfPredictor.predict(
-                            decodedPath[j].latitude.toFloat(),
-                            decodedPath[j].longitude.toFloat(),
+                    val traffic = sklearnPredictor.predict(
+                            decodedPath[j].latitude,
+                            decodedPath[j].longitude,
                             c.get(Calendar.DAY_OF_WEEK) - 1,
                             c.get(Calendar.HOUR_OF_DAY),
                             c.get(Calendar.MINUTE))
-                    /*val traffic = wekaPredictor.predict(
-                            decodedPath[j].latitude,
-                            decodedPath[j].longitude,
-                            (c.get(Calendar.DAY_OF_WEEK) - 1).toDouble(),
-                            c.get(Calendar.HOUR_OF_DAY).toDouble(),
-                            c.get(Calendar.MINUTE).toDouble())*/
+                    /*val traffic = tfPredictor.predict(
+                        decodedPath[j].latitude.toFloat(),
+                        decodedPath[j].longitude.toFloat(),
+                        c.get(Calendar.DAY_OF_WEEK) - 1,
+                        c.get(Calendar.HOUR_OF_DAY),
+                        c.get(Calendar.MINUTE))*/
                     when (j) {
                         0 -> {
-                            val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
+                            val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j + 1].latitude, decodedPath[j + 1].longitude)
                             val distance0 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location0.latitude, location0.longitude)
                             val speed0 = ETA.speed(traffic!!.toInt())
                             //Log.d("Distance 0 : " ,"" + distance0)
                             time += distance0 / speed0
+                            dist += distance0
                             t.add(addSegment(traffic, decodedPath[j], location0))
                         }
-                        decodedPath.size-1 -> {
-                            val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
+                        decodedPath.size - 1 -> {
+                            val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j - 1].latitude, decodedPath[j - 1].longitude)
                             val distance1 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location1.latitude, location1.longitude)
                             val speed1 = ETA.speed(traffic!!.toInt())
                             //Log.d("Distance 1 : " ,"" + distance1)
                             time += distance1 / speed1
+                            dist += distance1
                             t.add(addSegment(traffic, location1, decodedPath[j]))
                         }
                         else -> {
-                            val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
+                            val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j - 1].latitude, decodedPath[j - 1].longitude)
                             val distance2 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location2.latitude, location2.longitude)
                             val speed2 = ETA.speed(traffic!!.toInt())
                             //Log.d("Distance 2 : " ,"" + distance2)
                             time += distance2 / speed2
+                            dist += distance2
                             t.add(addSegment(traffic, location2, decodedPath[j]))
 
-                            val location3 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
+                            val location3 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j + 1].latitude, decodedPath[j + 1].longitude)
                             val distance3 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location3.latitude, location3.longitude)
                             val speed3 = ETA.speed(traffic.toInt())
                             //Log.d("Distance 3 : " ,"" + distance3)
                             time += distance3 / speed3
+                            dist += distance3
                             t.add(addSegment(traffic, decodedPath[j], location3))
                         }
                     }
 
+
                 }
                 route.add(t)
                 route_time.add(time)
+                route_lengths.add(dist)
                 Log.d("Estimated Time",""+ timeConversion((time).toInt()))
             }
             else {
@@ -487,7 +500,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         if(!route_time.isEmpty()) {
             x = route_time.indexOf(Collections.min(route_time))
             Log.d("Best Route", "" + x)
-            timeBar = Snackbar.make(root_view, timeConversion(Collections.min(route_time).toInt()),Snackbar.LENGTH_INDEFINITE)
+            val barMsg = "${timeConversion(Collections.min(route_time).toInt())} (${"%.2f".toString().format(route_lengths[x]/1000)} km)"
+            timeBar = Snackbar.make(root_view, barMsg, Snackbar.LENGTH_INDEFINITE)
             timeBar!!.show()
         }
         for(j in 0 until route[x].size) {
@@ -498,6 +512,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
             val defaultPolylineOptions = PolylineOptions()
                     .color(ContextCompat.getColor(applicationContext, R.color.routeInactive))
+                    .width(15f)
             val t = ArrayList<Polyline>()
             t.add(mMap.addPolyline(defaultPolylineOptions.addAll(decodedPath)))
             route.add(t)
@@ -505,7 +520,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     }
 
     private fun addSegment(traffic: Long, source: LatLng, destination: LatLng): Polyline {
-        val polyLineOptions = PolylineOptions()
+        val polyLineOptions = PolylineOptions().width(15f)
         when (traffic) {
             0L -> {
                 polyLineOptions.add(LatLng(source.latitude, source.longitude)).color(ContextCompat.getColor(applicationContext, R.color.green))
@@ -536,7 +551,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             override fun onResult(result: DirectionsResult?) {
                 runOnUiThread {
                     addPolyline(result!!, gmap)
-                    gmap.setPadding(0,map_bar_layout.height + 60,0,0)
+                    gmap.setPadding(0,map_bar_layout.height + 60,0,logout.height+40)
                     positionCamera(result.routes[0], gmap)
                 }
 
@@ -568,7 +583,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         val minutes:Int = seconds / 60
         seconds %= 60
         return when(hours) {
-            0-> "$minutes mins"
+            0-> if(minutes <= 1) "2 min" else "$minutes mins"
             1 -> "$hours hr $minutes mins"
             else -> "$hours hrs $minutes mins"
         }
