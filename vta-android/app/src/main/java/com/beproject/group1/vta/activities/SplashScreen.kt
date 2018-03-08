@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Handler
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import com.android.volley.Response
 import com.beproject.group1.vta.VTAApplication
@@ -15,6 +16,7 @@ import com.beproject.group1.vta.helpers.APIController
 import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
 import com.beproject.group1.vta.helpers.WekaPredictor
+import kotlinx.android.synthetic.main.activity_splash_screen.*
 import org.json.JSONObject
 import java.io.*
 import java.text.SimpleDateFormat
@@ -124,6 +126,7 @@ class SplashScreen : AppCompatActivity() {
     }
 
     private fun syncWekaAndLaunchApp(intent: Intent, accessToken: String) {
+        splash_message.visibility = View.VISIBLE
         apiController.downloadFile("${WekaPredictor.model_name}.zip", accessToken, Response.Listener<ByteArray> {response ->
             try {
                 if (response != null) {
@@ -135,6 +138,7 @@ class SplashScreen : AppCompatActivity() {
                     Toast.makeText(this, "WEKA Download complete.", Toast.LENGTH_LONG).show()
                     val b = unpackZip("${filesDir.absolutePath}/", name)
                     Toast.makeText(this, "WEKA unzip: $b.", Toast.LENGTH_LONG).show()
+                    splash_message.visibility = View.GONE
                     this@SplashScreen.startActivity(intent)
                     this@SplashScreen.finish()
                 }

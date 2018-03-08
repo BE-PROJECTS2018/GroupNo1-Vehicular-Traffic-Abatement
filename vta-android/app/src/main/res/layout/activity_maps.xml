@@ -58,4 +58,14 @@
         app:backgroundTint="@android:color/white"
         app:pressedTranslationZ="12dp"
         />
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:id="@+id/logout"
+        app:srcCompat="@drawable/ic_logout"
+        app:backgroundTint="@android:color/white"
+        app:pressedTranslationZ="12dp"
+        />
 </android.support.design.widget.CoordinatorLayout>

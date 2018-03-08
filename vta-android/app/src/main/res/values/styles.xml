@@ -6,6 +6,21 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:actionBarStyle">@style/AppTheme.ActionBarStyle</item>
+        <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
+        <item name="android:actionMenuTextColor">@color/colorAccent</item>
+        <item name="actionMenuTextColor">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.ActionBarStyle" parent="Widget.AppCompat.ActionBar.Solid">
+        <item name="android:titleTextStyle">@style/AppTheme.ActionBar.TitleTextStyle</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_back</item>
+        <item name="homeAsUpIndicator">@drawable/ic_back</item>
+        <item name="titleTextStyle">@style/AppTheme.ActionBar.TitleTextStyle</item>
+    </style>
+
+    <style name="AppTheme.ActionBar.TitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/colorAccent</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="AppTheme">

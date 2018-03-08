@@ -243,6 +243,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
     }
 
     private fun syncWekaAndLaunchApp(intent: Intent, accessToken: String) {
+        sync_message.visibility = View.VISIBLE
         apiController.downloadFile("${WekaPredictor.model_name}.zip", accessToken, Response.Listener<ByteArray> { response ->
             try {
                 if (response != null) {
@@ -254,6 +255,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                     Toast.makeText(this, "WEKA Download complete.", Toast.LENGTH_LONG).show()
                     val b = unpackZip("${filesDir.absolutePath}/", name)
                     Toast.makeText(this, "WEKA unzip: $b.", Toast.LENGTH_LONG).show()
+                    sync_message.visibility = View.GONE
                     this@LoginActivity.startActivity(intent)
                     this@LoginActivity.finish()
                 }

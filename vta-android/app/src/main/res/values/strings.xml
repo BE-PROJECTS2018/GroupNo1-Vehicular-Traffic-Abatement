@@ -29,4 +29,5 @@
     <string name="from_location">Source</string>
     <string name="out_of_service_region">We do not serve this region yet</string>
     <string name="offline_alert">Currently offline</string>
+    <string name="sync_alert">Synchronizing...\nThis may take time</string>
 </resources>

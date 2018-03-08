@@ -7,6 +7,7 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
+    android:background="@color/colorPrimary"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.beproject.group1.vta.activities.SignUpActivity">
 
@@ -32,6 +33,7 @@
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
+                android:textColorHint="@color/colorAccent"
                 android:layout_height="wrap_content">
 
                 <AutoCompleteTextView
@@ -39,6 +41,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/prompt_email"
+                    android:textColor="@android:color/white"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
                     android:singleLine="true" />
@@ -47,12 +50,14 @@
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
+                android:textColorHint="@color/colorAccent"
                 android:layout_height="wrap_content">
 
                 <EditText
                     android:id="@+id/password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
                     android:hint="@string/prompt_password"
                     android:imeActionId="6"
                     android:inputType="textPassword"
@@ -63,9 +68,11 @@
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
+                android:textColorHint="@color/colorAccent"
                 android:layout_height="wrap_content">
 
                 <EditText
+                    android:textColor="@android:color/white"
                     android:id="@+id/confirm_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -81,9 +88,11 @@
 
             <Button
                 android:id="@+id/email_sign_up_button"
-                style="?android:textAppearanceSmall"
+                style="?android:textAppearanceLarge"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:background="@color/colorAccent"
                 android:layout_marginTop="16dp"
                 android:text="@string/action_sign_up"
                 android:textStyle="bold" />

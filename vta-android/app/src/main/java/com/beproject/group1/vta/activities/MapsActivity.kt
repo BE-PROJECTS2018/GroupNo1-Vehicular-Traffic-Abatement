@@ -3,7 +3,9 @@ package com.beproject.group1.vta.activities
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Color
@@ -27,6 +29,7 @@ import android.os.SystemClock
 import android.support.v4.content.ContextCompat
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
+import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.ETA
 import com.beproject.group1.vta.helpers.Geofence
 import com.beproject.group1.vta.helpers.TFPredictor
@@ -176,6 +179,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 locateMe()
             }
 
+        })
+
+        logout.setOnClickListener({_ ->
+            val sp = getSharedPreferences(VTAApplication.PREF_FILE, Context.MODE_PRIVATE)
+            val spe = sp.edit()
+            spe.remove("email")
+            spe.remove("password")
+            spe.apply()
+            val intent = Intent(this@MapsActivity, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
         })
 
        /* val country:String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -386,7 +400,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
 
         val c = Calendar.getInstance()
         val tfPredictor = TFPredictor(this)
-        val wekaPredictor = WekaPredictor(this)
+//        val wekaPredictor = WekaPredictor(this)
         Log.d("Total routes", ""+results.routes.size)
         for(i in 0 until route.size)
         {
@@ -532,6 +546,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         }
         if(Geofence.containsCoordinates(source.latitude, source.longitude)
         && Geofence.containsCoordinates(destination.latitude, destination.longitude)) {
+            Log.d("not ignore", "true")
             getDirectionsDetails(source.latitude.toString() + "," + source.longitude.toString(), destination.latitude.toString() + "," + destination.longitude.toString(), TravelMode.DRIVING, callback)
         } else {
             Snackbar.make(mapFragment.view!!,R.string.out_of_service_region, Snackbar.LENGTH_SHORT)
@@ -601,7 +616,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             }
         }
         route.clear()
-        timeBar!!.dismiss()
+        if(timeBar != null) {
+            timeBar!!.dismiss()
+        }
         locateMe()
     }
 

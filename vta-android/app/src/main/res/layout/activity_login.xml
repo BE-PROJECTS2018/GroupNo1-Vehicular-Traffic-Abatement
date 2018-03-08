@@ -8,16 +8,28 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@color/colorPrimary"
     tools:context="com.beproject.group1.vta.activities.LoginActivity">
 
     <!-- Login progress -->
     <ProgressBar
+        android:visibility="gone"
         android:id="@+id/login_progress"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:visibility="gone" />
+         />
+    <TextView
+        android:visibility="gone"
+        android:id="@+id/sync_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sync_alert"
+        android:textAlignment="center"
+        android:textStyle="italic"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"/>
 
     <ScrollView
         android:id="@+id/login_form"
@@ -32,9 +44,11 @@
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
+                android:textColorHint="@color/colorAccent"
                 android:layout_height="wrap_content">
 
                 <AutoCompleteTextView
+                    android:textColor="@android:color/white"
                     android:id="@+id/email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -47,10 +61,12 @@
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
+                android:textColorHint="@color/colorAccent"
                 android:layout_height="wrap_content">
 
                 <EditText
                     android:id="@+id/password"
+                    android:textColor="@android:color/white"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/prompt_password"
@@ -65,8 +81,10 @@
 
             <Button
                 android:id="@+id/email_sign_in_button"
-                style="?android:textAppearanceSmall"
+                style="?android:textAppearanceLarge"
+                android:background="@color/colorAccent"
                 android:layout_width="match_parent"
+                android:textColor="@android:color/white"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/action_sign_in"

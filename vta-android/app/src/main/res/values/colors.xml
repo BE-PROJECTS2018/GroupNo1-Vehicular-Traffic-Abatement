@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#000</color>
+    <color name="colorPrimaryDark">#000</color>
+    <color name="colorAccent">#0091EA</color>
     <color name="green">#84ca50</color>
     <color name="orange">#f07d02</color>
     <color name="red">#e60000</color>
     <color name="darkRed">#9e1313</color>
-    <color name="geoFenceColor">#1e6a1b9a</color>
-    <color name="geoFenceBorder">#6a1b9a</color>
+    <color name="geoFenceColor">#367492a8</color>
+    <color name="geoFenceBorder">#7492a8</color>
     <color name="routeInactive">#b4363636</color>
 </resources>
