@@ -15,7 +15,11 @@ pyexcel==0.5.7
 pyexcel-io==0.5.6
 pyexcel-ods==0.5.2
 python-geohash==0.8.5
+scikit-learn==0.19.1
+scipy==1.0.0
 six==1.11.0
+sklearn==0.0
+sklearn-porter==0.6.2
 tensorboard==1.6.0
 tensorflow==1.6.0
 tensorflow-tensorboard==1.5.1

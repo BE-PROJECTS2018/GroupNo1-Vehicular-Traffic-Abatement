@@ -3,6 +3,8 @@ from random import shuffle
 from pyexcel_ods import get_data, save_data
 from collections import OrderedDict
 import geohash as gh
+import numpy as np
+from time import time
 
 def fil03(t):
     return t['hour'] >= 0 and t['hour'] <= 3
@@ -52,7 +54,7 @@ def process_inputs_as_hash(t):
     range = max - min
     lat = round(t['lat'], 7)# - latmin)/(latmax - latmin) * range + min
     lng = round(t['lng'], 7)# - lngmin)/(lngmax - lngmin) * range + min
-    hash = gh.encode(lat, lng)
+    hash = gh.encode(lat, lng, 7)
     weekday = t['weekday']#/6 * range + min
     hour    = t['hour']#/23 * range + min
     minutes = (t['min']//15*15)#/45 * range + min
@@ -119,7 +121,32 @@ def save_csv(dir):
     save_data('v1-1-2123.csv', csv)
     print('done')
 
+def del_dups(data):
+    ndata = []
+    data = np.array(data)
+    x = data[:,:-1]
+    y = data[:,-1].astype(int)
+    print('Finding unique records...', end='', flush=True)
+    ux = np.unique(x, axis=0)
+    print('done')
+    print('Summarizing predictions...', end='', flush=True)
+    for i in range(len(ux)):
+        xi = np.argwhere((x == ux[i]).all(axis=1)).flatten()
+        yi = y[xi]
+        uy = int(np.argmax(np.bincount(yi)))
+        tup = []
+        for j in range(len(ux[i])):
+            if j == 0:
+                tup.append(ux[i][j])
+            else:
+                tup.append(ux[i][j].astype(int))
+        tup.append(uy)
+        ndata.append(tup)
+    print('done')
+    return ndata
+
 def save_csvas_hash(dir):
+    t1 = time()
     print('Loading data...', end='', flush=True)
     tuple_paths = glob.glob(dir+'/**/*.json')
     data = []
@@ -127,6 +154,7 @@ def save_csvas_hash(dir):
         with open(path) as json_data:
             d = json.load(json_data)
         data.extend(d)
+    print('done')
     # d1 = list(filter(fil1821, data))
     # d=[]
     cols = ['geohash', 'weekday', 'hour', 'min', 'seconds', 'traffic']
@@ -134,19 +162,23 @@ def save_csvas_hash(dir):
     # csv=OrderedDict([('', d)])
     # save_data('v1-1-geohash.csv', csv)
     ranges = [3,6,9,12,15,18,21,23]
-    fname = 'v1-1-geohash-0{}.csv'.format(ranges[0])
+    fname = 'v1-1-geohash-1-0{}.csv'.format(ranges[0])
     ndata = list(filter(lambda t: t['hour'] > -1 and t['hour'] <=ranges[0], data))
+    ndata = list(map(process_inputs_as_hash, ndata))
+    ndata = del_dups(ndata)
     d = [cols[:]]
-    d.extend(list(map(process_inputs_as_hash, ndata)))
+    d.extend(ndata)
     csv = OrderedDict([('', d)])
     save_data(fname, csv)
     for i in range(1, len(ranges)):
-        fname = 'v1-1-geohash-{}{}.csv'.format(ranges[i-1], ranges[i])
+        fname = 'v1-1-geohash-1-{}{}.csv'.format(ranges[i-1], ranges[i])
         ndata = list(filter(lambda t: t['hour'] > ranges[i-1] and t['hour'] <=ranges[i], data))
+        ndata = list(map(process_inputs_as_hash, ndata))
+        ndata = del_dups(ndata)
         d = [cols[:]]
-        d.extend(list(map(process_inputs_as_hash, ndata)))
+        d.extend(ndata)
         csv = OrderedDict([('', d)])
         save_data(fname, csv)
-    print('done')
+    print('Time taken {:.2f}s'.format(time()-t1))
 # save_csv('./../IP/json')
 save_csvas_hash('./../IP/json')
