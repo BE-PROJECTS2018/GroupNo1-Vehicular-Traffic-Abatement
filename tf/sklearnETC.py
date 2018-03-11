@@ -22,6 +22,8 @@ def arrange(arr, ord):
 
 sets = [0,3,6,9,12,15,18,21,23]
 acc = np.zeros(len(sets)-1)
+predicted = np.zeros(4)
+expected = np.zeros(4)
 for s in range(1, len(sets)):
     print('Loading data...',end='', flush=True)
     model = 'v1-1-geohash-1-{}{}'.format(sets[s-1], sets[s])
@@ -57,7 +59,7 @@ for s in range(1, len(sets)):
     clf1 = ExtraTreesClassifier(max_depth=20, n_estimators=10, class_weight=clw_dict, min_samples_leaf=1, warm_start=True)
     # clf1 = AdaBoostClassifier(algorithm='SAMME', base_estimator=LinearSVC(tol=0.01, penalty='l1', dual=False, C=2.5, class_weight='balanced', max_iter=100000))
     t1 = time()
-    for i in range(5):
+    for i in range(2):
         X_train , X_test , y_train , y_test = train_test_split(X,y,test_size=0.2)
         # counts = np.unique(y_train, return_counts=True)
         # counts = arrange(counts[1], counts[0])
@@ -82,11 +84,18 @@ for s in range(1, len(sets)):
     print('Training time: {:.2f}s'.format(time()-t1))
     print('Test accuracy = {:.2f}'.format(accuracy*100))
     acc[s-1] = accuracy*100
-    print(confusion_matrix(y_test, pred))
+    cfmat = confusion_matrix(y_test, pred)
+    print(cfmat)
+    predicted += cfmat.sum(axis=0)
+    expected += cfmat.transpose().sum(axis=0)
     porter = Porter(clf1)
     op = porter.export(export_data=True)
     with open('{}.java'.format(model), 'w') as f:
         f.write(op)
     os.rename('data.json', '{}.json'.format(model))
     # print(op)
+predicted = predicted / sum(predicted) * 100
+expected = expected / sum(expected) * 100
 print('Final accuracy = {:.2f}'.format(sum(acc)/len(acc)))
+print('Expected distribution', expected)
+print('Predicted distribution', predicted)
