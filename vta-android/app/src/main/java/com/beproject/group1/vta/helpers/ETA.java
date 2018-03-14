@@ -31,7 +31,7 @@ public class ETA {
         }
         return 0.0;
     }
-    static double time(double a,double b,double c,double d,int m1,int m2)
+    public static double time(double a,double b,double c,double d,int m1,int m2)
     {
         DecimalFormat df = new DecimalFormat(".##");
         double dis = distance(a, b, c, d);
