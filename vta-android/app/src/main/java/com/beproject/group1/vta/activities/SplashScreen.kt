@@ -14,7 +14,7 @@ import com.android.volley.Response
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
 import com.beproject.group1.vta.helpers.ExtraTreesClassifier
-import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
+//import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
 import kotlinx.android.synthetic.main.activity_splash_screen.*
 import org.jetbrains.anko.doAsync
@@ -230,7 +230,7 @@ class SplashScreen : AppCompatActivity() {
         return true
     }
 
-    private fun maybeSync() {
+    /*private fun maybeSync() {
         val accessToken = sp.getString("id", null)
         val fmtime = sp.getString("fmtime", null)
         val intent = Intent(this@SplashScreen, MapsActivity::class.java)
@@ -305,5 +305,6 @@ class SplashScreen : AppCompatActivity() {
             error.printStackTrace()
         })
     }
+    */
 
 }

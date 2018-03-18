@@ -30,7 +30,7 @@ import com.beproject.group1.vta.R
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
 import com.beproject.group1.vta.helpers.ExtraTreesClassifier
-import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
+//import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
 import com.beproject.group1.vta.helpers.VolleyService
 
 import kotlinx.android.synthetic.main.activity_login.*
@@ -79,6 +79,10 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         })
 
         email_sign_in_button.setOnClickListener { attemptLogin() }
+        sign_up_link.setOnClickListener({_ ->
+            val intent = Intent(baseContext, SignUpActivity::class.java)
+            startActivity(intent)
+        })
     }
 
     private fun populateAutoComplete() {
@@ -116,21 +120,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 populateAutoComplete()
             }
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.login_menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item!!.itemId) {
-            R.id.sign_up -> {
-                val intent = Intent(baseContext, SignUpActivity::class.java)
-                startActivity(intent)
-            }
-        }
-        return super.onOptionsItemSelected(item)
     }
 
     /**
@@ -348,7 +337,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         return true
     }
 
-    private fun maybeSync(sp: SharedPreferences) {
+    /*private fun maybeSync(sp: SharedPreferences) {
         val accessToken = sp.getString("id", null)
         val fmtime = sp.getString("fmtime", null)
         val intent = Intent(this@LoginActivity, MapsActivity::class.java)
@@ -423,7 +412,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             error.printStackTrace()
         })
     }
-
+*/
     private fun isEmailValid(email: String): Boolean {
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
