@@ -1,38 +1,35 @@
 package com.beproject.group1.vta.activities
 
+//import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
+
+import android.Manifest.permission.READ_CONTACTS
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.TargetApi
-import android.content.pm.PackageManager
-import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
 import android.app.LoaderManager.LoaderCallbacks
+import android.content.*
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.support.design.widget.Snackbar
+import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.TextView
-
-import android.Manifest.permission.READ_CONTACTS
-import android.content.*
-import android.util.Log
-import android.util.Patterns
-import android.view.Menu
-import android.view.MenuItem
 import android.widget.Toast
 import com.android.volley.Response
 import com.beproject.group1.vta.R
 import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.APIController
 import com.beproject.group1.vta.helpers.ExtraTreesClassifier
-//import com.beproject.group1.vta.helpers.TFPredictor.Companion.model_name
+import com.beproject.group1.vta.helpers.Validation
 import com.beproject.group1.vta.helpers.VolleyService
-
 import kotlinx.android.synthetic.main.activity_login.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
@@ -46,7 +43,7 @@ import java.util.zip.ZipInputStream
 /**
  * A login screen that offers login via email/password.
  */
-class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
+public class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -144,7 +141,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         var focusView: View? = null
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(passwordStr) && !isPasswordValid(passwordStr)) {
+        if (!TextUtils.isEmpty(passwordStr) && !Validation.isPasswordValid(passwordStr)) {
             password.error = getString(R.string.error_invalid_password)
             focusView = password
             cancel = true
@@ -155,7 +152,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             email.error = getString(R.string.error_field_required)
             focusView = email
             cancel = true
-        } else if (!isEmailValid(emailStr)) {
+        } else if (!Validation.isEmailValid(emailStr)) {
             email.error = getString(R.string.error_invalid_email)
             focusView = email
             cancel = true
@@ -413,13 +410,13 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         })
     }
 */
-    private fun isEmailValid(email: String): Boolean {
+    /*public fun isEmailValid(email: String): Boolean {
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
+    }*/
 
-    private fun isPasswordValid(password: String): Boolean {
+    /*public fun isPasswordValid(password: String): Boolean {
         return password.length > 4
-    }
+    }*/
 
     /**
      * Shows the progress UI and hides the login form.
