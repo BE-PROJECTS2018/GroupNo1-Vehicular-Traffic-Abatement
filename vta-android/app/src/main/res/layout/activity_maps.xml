@@ -6,6 +6,7 @@
     tools:context="com.beproject.group1.vta.activities.MapsActivity"
     android:layout_height="match_parent"
     android:layout_width="match_parent">
+
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:id="@+id/map_bar_layout"
@@ -23,9 +24,19 @@
                 android:padding="14dp"
                 android:foreground="?android:selectableItemBackgroundBorderless"
                 android:background="@android:color/white"
+                android:id="@+id/source_picker"
+                android:layout_width="wrap_content"
+                android:src="@drawable/ic_pin_drop"
+                android:layout_height="wrap_content" />
+            <ImageButton
+                android:layout_toLeftOf="@id/source_picker"
+                android:layout_toStartOf="@id/source_picker"
+                android:padding="14dp"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:background="@android:color/white"
                 android:id="@+id/source_my_location"
                 android:layout_width="wrap_content"
-                android:src="@mipmap/ic_location_selector"
+                android:src="@drawable/ic_my_location"
                 android:layout_height="wrap_content" />
             <fragment
                 android:layout_toLeftOf="@id/source_my_location"
@@ -34,8 +45,21 @@
                 android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
+            <ImageButton
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/source_picker"
+                android:padding="14dp"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:background="@android:color/white"
+                android:id="@+id/destination_picker"
+                android:layout_width="wrap_content"
+                android:src="@drawable/ic_pin_drop"
+                android:layout_height="wrap_content" />
             <fragment
                 android:layout_below="@id/from_location"
+                android:layout_toLeftOf="@id/destination_picker"
+                android:layout_toStartOf="@id/destination_picker"
                 android:id="@+id/to_location"
                 android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
                 android:layout_width="match_parent"
@@ -54,8 +78,37 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:id="@+id/my_location"
-        app:srcCompat="@mipmap/ic_location_selector"
+        app:srcCompat="@drawable/ic_my_location"
         app:backgroundTint="@android:color/white"
         app:pressedTranslationZ="12dp"
         />
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:id="@+id/logout"
+        app:srcCompat="@drawable/ic_logout"
+        app:backgroundTint="@android:color/white"
+        app:pressedTranslationZ="12dp"
+        />
+    <RelativeLayout
+        android:visibility="gone"
+        android:id="@+id/loading_cover"
+        android:background="@color/routeInactive"
+        android:layout_width="match_parent"
+        android:elevation="10dp"
+        android:clickable="true"
+        android:layout_height="match_parent">
+        <com.github.ybq.android.spinkit.SpinKitView
+            android:id="@+id/ml_progress"
+            android:layout_below="@id/splash_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:layout_centerInParent="true"
+            style="@style/SpinKitView.Large.Wave"
+            app:SpinKit_Color="@color/colorAccent"
+            />
+    </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>

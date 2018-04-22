@@ -2,7 +2,9 @@ package com.beproject.group1.vta.activities
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -27,9 +29,10 @@ import android.os.SystemClock
 import android.support.v4.content.ContextCompat
 import android.view.animation.LinearInterpolator
 import com.beproject.group1.vta.R
+import com.beproject.group1.vta.VTAApplication
 import com.beproject.group1.vta.helpers.ETA
 import com.beproject.group1.vta.helpers.Geofence
-import com.beproject.group1.vta.helpers.TFPredictor
+import com.beproject.group1.vta.helpers.SklearnPredictor
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.common.api.Status
@@ -37,6 +40,7 @@ import com.google.android.gms.location.*
 import com.google.android.gms.location.places.AutocompleteFilter
 import com.google.android.gms.location.places.Place
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment
+import com.google.android.gms.location.places.ui.PlacePicker
 import com.google.android.gms.location.places.ui.PlaceSelectionListener
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
@@ -84,10 +88,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private lateinit var fromLocation: PlaceAutocompleteFragment
     private var toLocMarker: Marker? = null
     private var fromLocMarker: Marker? = null
+    private val sourcePickerRequest = 101
+    private val destinationPickerRequest = 102
     private var route: ArrayList <ArrayList<Polyline>> = ArrayList <ArrayList<Polyline>> ()
     private var hasSensors: Boolean = false
 
     private var timeBar: Snackbar? = null
+
+    private lateinit var sklearnPredictor: SklearnPredictor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -169,12 +177,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         matrixI = FloatArray(9)
         matrixValues = FloatArray(3)
 
+        sklearnPredictor = SklearnPredictor(this)
+
         my_location.setOnClickListener({_ ->
 
             if (mylocation != null) {
                 locateMe()
             }
 
+        })
+
+        logout.setOnClickListener({_ ->
+            val sp = getSharedPreferences(VTAApplication.PREF_FILE, Context.MODE_PRIVATE)
+            val spe = sp.edit()
+            spe.remove("email")
+            spe.remove("password")
+            spe.apply()
+            val intent = Intent(this@MapsActivity, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
         })
 
        /* val country:String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -268,6 +289,56 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                         }
                     })
         })
+        source_picker.setOnClickListener({ _ ->
+            val sourcePicker = PlacePicker.IntentBuilder()
+            startActivityForResult(sourcePicker.build(this), sourcePickerRequest)
+        })
+        destination_picker.setOnClickListener({ _ ->
+            val destPicker = PlacePicker.IntentBuilder()
+            startActivityForResult(destPicker.build(this), destinationPickerRequest)
+        })
+//        ml_progress.indeterminateDrawable = ChasingDots()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == sourcePickerRequest && resultCode == Activity.RESULT_OK) {
+            val place = PlacePicker.getPlace(this, data)
+            if (place != null) {
+                val latLng = place.latLng
+                fromLocation.setText(place.name)
+                if (fromLocMarker == null) {
+                    fromLocMarker = gmap.addMarker(MarkerOptions()
+                            .position(LatLng(latLng.latitude, latLng.longitude)))
+                    if (toLocMarker != null) {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
+                } else {
+                    fromLocMarker!!.position = LatLng(latLng.latitude, latLng.longitude)
+                    if (toLocMarker != null) {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
+                }
+            }
+        }
+        if (requestCode == destinationPickerRequest && resultCode == Activity.RESULT_OK) {
+            val place = PlacePicker.getPlace(this, data)
+            if (place != null) {
+                val latLng = place.latLng
+                toLocation.setText(place.name)
+                if (toLocMarker == null) {
+                    toLocMarker = gmap.addMarker(MarkerOptions()
+                            .position(LatLng(latLng.latitude, latLng.longitude)))
+                    if (fromLocMarker != null) {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
+                } else {
+                    toLocMarker!!.position = LatLng(latLng.latitude, latLng.longitude)
+                    if (fromLocMarker != null) {
+                        plotRoute(fromLocMarker!!.position, toLocMarker!!.position)
+                    }
+                }
+            }
+        }
     }
 
     override fun onBackPressed() {
@@ -319,7 +390,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 val camLoc = gmap.cameraPosition.target
                 val res = FloatArray(3)
                 Location.distanceBetween(mylocation!!.latitude, mylocation!!.longitude, camLoc.latitude, camLoc.longitude, res)
-                if (res[0] < 50 /*meters*/) {
+                if (res[0] < 100 /*meters*/) {
                     gmap.animateCamera(CameraUpdateFactory.newLatLng(LatLng(mylocation!!.latitude, mylocation!!.longitude)))
                 }
             }
@@ -338,7 +409,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             initMarker()
         }
         Handler().postDelayed({
-            gmap.setPadding(0, map_bar_layout.height + 60, 0, 0)
+            gmap.setPadding(0,map_bar_layout.height + 60,0,logout.height+40)
         }, 100)
     }
 
@@ -384,18 +455,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
     private fun addPolyline(results: DirectionsResult, mMap: GoogleMap) {
 
         val c = Calendar.getInstance()
-        val tfPredictor = TFPredictor(this)
+//        val tfPredictor = TFPredictor(this)
+//        val wekaPredictor = WekaPredictor(this)
+
         Log.d("Total routes", ""+results.routes.size)
-        for(i in 0 until route.size)
-        {
-            for(j in 0 until route[i].size) {
-                route[i][j].remove()
+        runOnUiThread {
+            for (i in 0 until route.size) {
+                for (j in 0 until route[i].size) {
+                    route[i][j].remove()
+                }
             }
+            route.clear()
         }
-        route.clear()
         val route_time = ArrayList<Double>()
+        val route_lengths = ArrayList<Double>()
         val routeInFence = ArrayList<Boolean>()
-        for(i in 0 until results.routes.size) {
+        val traffics = ArrayList<ArrayList<Long>>()
+        for (i in 0 until results.routes.size) {
+            val traffic = ArrayList<Long>()
             val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
             //List<com.google.maps.model.LatLng> decode = results.routes[0].overviewPolyline.decodePath();
             var add = true
@@ -403,87 +480,160 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
                 add = Geofence.containsCoordinates(path.latitude, path.longitude)
                 if(!add) break
             }
-            if(add) {
-                val t = ArrayList<Polyline>()
+            if (add) {
                 routeInFence.add(true)
                 var time: Double = 0.toDouble()
-
                 for(j in 0 until decodedPath.size) {
                     c.time = Date()
                     c.add(Calendar.SECOND, time.toInt())
                     //mMap.addMarker(MarkerOptions().position(LatLng(decodedPath[i].latitude.toDouble(), decodedPath[i].longitude.toDouble())))
-                    val traffic = tfPredictor.predict(
-                            decodedPath[j].latitude.toFloat(),
-                            decodedPath[j].longitude.toFloat(),
+                    val pt = sklearnPredictor.predict(
+                            decodedPath[j].latitude,
+                            decodedPath[j].longitude,
                             c.get(Calendar.DAY_OF_WEEK) - 1,
                             c.get(Calendar.HOUR_OF_DAY),
                             c.get(Calendar.MINUTE))
+                    traffic.add(pt)
                     when (j) {
                         0 -> {
-                            val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
+                            val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j + 1].latitude, decodedPath[j + 1].longitude)
                             val distance0 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location0.latitude, location0.longitude)
-                            val speed0 = ETA.speed(traffic.toInt())
+                            val speed0 = ETA.speed(pt.toInt())
                             //Log.d("Distance 0 : " ,"" + distance0)
                             time += distance0 / speed0
-                            t.add(addSegment(traffic, decodedPath[j], location0))
+
                         }
-                        decodedPath.size-1 -> {
-                            val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
+                        decodedPath.size - 1 -> {
+                            val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j - 1].latitude, decodedPath[j - 1].longitude)
                             val distance1 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location1.latitude, location1.longitude)
-                            val speed1 = ETA.speed(traffic.toInt())
+                            val speed1 = ETA.speed(pt.toInt())
                             //Log.d("Distance 1 : " ,"" + distance1)
                             time += distance1 / speed1
-                            t.add(addSegment(traffic, location1, decodedPath[j]))
+
                         }
                         else -> {
-                            val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j-1].latitude, decodedPath[j-1].longitude)
+                            val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j - 1].latitude, decodedPath[j - 1].longitude)
                             val distance2 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location2.latitude, location2.longitude)
-                            val speed2 = ETA.speed(traffic.toInt())
+                            val speed2 = ETA.speed(pt.toInt())
                             //Log.d("Distance 2 : " ,"" + distance2)
                             time += distance2 / speed2
-                            t.add(addSegment(traffic, location2, decodedPath[j]))
 
-                            val location3 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j+1].latitude, decodedPath[j+1].longitude)
+                            val location3 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j + 1].latitude, decodedPath[j + 1].longitude)
                             val distance3 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location3.latitude, location3.longitude)
-                            val speed3 = ETA.speed(traffic.toInt())
+                            val speed3 = ETA.speed(pt.toInt())
                             //Log.d("Distance 3 : " ,"" + distance3)
                             time += distance3 / speed3
-                            t.add(addSegment(traffic, decodedPath[j], location3))
                         }
                     }
-
                 }
-                route.add(t)
-                route_time.add(time)
-                Log.d("Estimated Time",""+ timeConversion((time).toInt()))
-            }
-            else {
+            } else {
                 routeInFence.add(false)
             }
+            traffics.add(traffic)
         }
-        var x=0
-        if(!route_time.isEmpty()) {
-            x = route_time.indexOf(Collections.min(route_time))
-            Log.d("Best Route", "" + x)
-            timeBar = Snackbar.make(root_view, timeConversion(Collections.min(route_time).toInt()),Snackbar.LENGTH_INDEFINITE)
-            timeBar!!.show()
-        }
-        for(j in 0 until route[x].size) {
-            route[x][j].zIndex = 2f
-        }
-        for(i in 0 until results.routes.size) {
-            if(i == x || !routeInFence[i]) continue
-            val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
-            val defaultPolylineOptions = PolylineOptions()
-                    .color(ContextCompat.getColor(applicationContext, R.color.routeInactive))
-            val t = ArrayList<Polyline>()
-            t.add(mMap.addPolyline(defaultPolylineOptions.addAll(decodedPath)))
-            route.add(t)
+        runOnUiThread {
+            var proceed = false
+            for(i in 0 until results.routes.size) {
+                if (routeInFence[i]) {
+                    proceed = true
+                    break
+                }
+            }
+            if(proceed) {
+                for (i in 0 until results.routes.size) {
+                    if (!routeInFence[i]) continue
+                    val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
+                    val t = ArrayList<Polyline>()
+                    var time: Double = 0.toDouble()
+                    var dist = 0.toDouble()
+                    for (j in 0 until decodedPath.size) {
+                        c.time = Date()
+                        c.add(Calendar.SECOND, time.toInt())
+                        when (j) {
+                            0 -> {
+                                val location0 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j + 1].latitude, decodedPath[j + 1].longitude)
+                                val distance0 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location0.latitude, location0.longitude)
+                                val speed0 = ETA.speed(traffics[i][j].toInt())
+                                //Log.d("Distance 0 : " ,"" + distance0)
+                                time += distance0 / speed0
+                                dist += distance0
+
+                                t.add(addSegment(traffics[i][j], decodedPath[j], location0))
+
+                            }
+                            decodedPath.size - 1 -> {
+                                val location1 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j - 1].latitude, decodedPath[j - 1].longitude)
+                                val distance1 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location1.latitude, location1.longitude)
+                                val speed1 = ETA.speed(traffics[i][j].toInt())
+                                //Log.d("Distance 1 : " ,"" + distance1)
+                                time += distance1 / speed1
+                                dist += distance1
+
+                                t.add(addSegment(traffics[i][j], location1, decodedPath[j]))
+
+                            }
+                            else -> {
+                                val location2 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j - 1].latitude, decodedPath[j - 1].longitude)
+                                val distance2 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location2.latitude, location2.longitude)
+                                val speed2 = ETA.speed(traffics[i][j].toInt())
+                                //Log.d("Distance 2 : " ,"" + distance2)
+                                time += distance2 / speed2
+                                dist += distance2
+                                t.add(addSegment(traffics[i][j], location2, decodedPath[j]))
+
+                                val location3 = midPoint(decodedPath[j].latitude, decodedPath[j].longitude, decodedPath[j + 1].latitude, decodedPath[j + 1].longitude)
+                                val distance3 = ETA.distance(decodedPath[j].latitude, decodedPath[j].longitude, location3.latitude, location3.longitude)
+                                val speed3 = ETA.speed(traffics[i][j].toInt())
+                                //Log.d("Distance 3 : " ,"" + distance3)
+                                time += distance3 / speed3
+                                dist += distance3
+                                t.add(addSegment(traffics[i][j], decodedPath[j], location3))
+                            }
+                        }
+                    }
+                    route.add(t)
+                    route_time.add(time)
+                    route_lengths.add(dist)
+                    Log.d("Estimated Time", "" + timeConversion((time).toInt()))
+                }
+
+                var x = 0
+                if (!route_time.isEmpty()) {
+                    x = route_time.indexOf(Collections.min(route_time))
+                    Log.d("Best Route", "" + x)
+                    val barMsg = "${timeConversion(Collections.min(route_time).toInt())} (${"%.2f".toString().format(route_lengths[x] / 1000)} km)"
+                    timeBar = Snackbar.make(root_view, barMsg, Snackbar.LENGTH_INDEFINITE)
+                    timeBar!!.show()
+                }
+                for (j in 0 until route[x].size) {
+                    route[x][j].zIndex = 2f
+                }
+                for (i in 0 until results.routes.size) {
+                    if (i == x || !routeInFence[i]) continue
+                    val decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.encodedPath)
+                    val defaultPolylineOptions = PolylineOptions()
+                            .zIndex(1f)
+                            .color(ContextCompat.getColor(applicationContext, R.color.routeInactive))
+                            .width(15f)
+                    val t = ArrayList<Polyline>()
+                    t.add(mMap.addPolyline(defaultPolylineOptions.addAll(decodedPath)))
+                    route.add(t)
+                }
+            } else {
+                Snackbar.make(mapFragment.view!!,R.string.no_routes_in_region, Snackbar.LENGTH_LONG)
+                        .addCallback(object : Snackbar.Callback() {
+                            override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                                clearRoutesAndMarkers()
+                                super.onDismissed(transientBottomBar, event)
+                            }
+                        })
+                        .show()
+            }
         }
     }
 
     private fun addSegment(traffic: Long, source: LatLng, destination: LatLng): Polyline {
-        val polyLineOptions = PolylineOptions()
+        val polyLineOptions = PolylineOptions().width(15f)
         when (traffic) {
             0L -> {
                 polyLineOptions.add(LatLng(source.latitude, source.longitude)).color(ContextCompat.getColor(applicationContext, R.color.green))
@@ -512,10 +662,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         }
         val callback = object : PendingResult.Callback<DirectionsResult> {
             override fun onResult(result: DirectionsResult?) {
+                addPolyline(result!!, gmap)
                 runOnUiThread {
-                    addPolyline(result!!, gmap)
-                    gmap.setPadding(0,map_bar_layout.height + 60,0,0)
-                    positionCamera(result.routes[0], gmap)
+                    gmap.setPadding(0,map_bar_layout.height + 60,0,logout.height+40)
+                    loading_cover.visibility = View.GONE
+//                    positionCamera(result.routes[0], gmap)
                 }
 
             }
@@ -524,6 +675,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         }
         if(Geofence.containsCoordinates(source.latitude, source.longitude)
         && Geofence.containsCoordinates(destination.latitude, destination.longitude)) {
+            Log.d("not ignore", "true")
+            gmap.animateCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds(source, destination), 150))
+            loading_cover.visibility = View.VISIBLE
             getDirectionsDetails(source.latitude.toString() + "," + source.longitude.toString(), destination.latitude.toString() + "," + destination.longitude.toString(), TravelMode.DRIVING, callback)
         } else {
             Snackbar.make(mapFragment.view!!,R.string.out_of_service_region, Snackbar.LENGTH_SHORT)
@@ -545,18 +699,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
         val minutes:Int = seconds / 60
         seconds %= 60
         return when(hours) {
-            0-> "$minutes mins"
+            0-> if(minutes <= 1) "2 min" else "$minutes mins"
             1 -> "$hours hr $minutes mins"
             else -> "$hours hrs $minutes mins"
         }
     }
 
-    private fun midPoint(lat1: Double, lon1: Double, lat2: Double, lon2: Double): LatLng {
-        var lat1 = lat1
-        var lon1 = lon1
-        var lat2 = lat2
+    private fun midPoint(clat1: Double, clon1: Double, clat2: Double, clon2: Double): LatLng {
+        var lat1 = clat1
+        var lon1 = clon1
+        var lat2 = clat2
 
-        val dLon = Math.toRadians(lon2 - lon1)
+        val dLon = Math.toRadians(clon2 - lon1)
 
         //convert to radians
         lat1 = Math.toRadians(lat1)
@@ -593,7 +747,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, SensorEventListene
             }
         }
         route.clear()
-        timeBar!!.dismiss()
+        if(timeBar != null) {
+            timeBar!!.dismiss()
+        }
         locateMe()
     }
 

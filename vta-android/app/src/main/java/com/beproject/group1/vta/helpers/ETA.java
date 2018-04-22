@@ -21,7 +21,7 @@ public class ETA {
         switch(mode)
         {
             case 0:
-                return 11.1111; //40kmph
+                return 8.3333; //30kmph
             case 1:
                 return 5.5556; //20kmph
             case 2:
@@ -31,7 +31,7 @@ public class ETA {
         }
         return 0.0;
     }
-    static double time(double a,double b,double c,double d,int m1,int m2)
+    public static double time(double a,double b,double c,double d,int m1,int m2)
     {
         DecimalFormat df = new DecimalFormat(".##");
         double dis = distance(a, b, c, d);

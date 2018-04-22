@@ -29,4 +29,7 @@
     <string name="from_location">Source</string>
     <string name="out_of_service_region">We do not serve this region yet</string>
     <string name="offline_alert">Currently offline</string>
+    <string name="sync_alert">Synchronizing...\nThis may take time</string>
+    <string name="no_routes_in_region">There are no routes through served regions</string>
+    <string name="signup_question">Create an Account</string>
 </resources>

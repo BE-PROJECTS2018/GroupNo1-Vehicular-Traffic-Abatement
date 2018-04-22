@@ -6,14 +6,11 @@
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryDark"
     tools:context="com.beproject.group1.vta.activities.SplashScreen">
-    <TextView
+    <ImageView
         android:id="@+id/splash_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:textSize="60sp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:src="@drawable/project_logo"
         android:layout_centerInParent="true"/>
     <ProgressBar
         android:id="@+id/splash_process"
@@ -24,4 +21,16 @@
         android:indeterminate="true"
         android:layout_centerHorizontal="true"
          />
+    <TextView
+        android:visibility="gone"
+        android:id="@+id/splash_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sync_alert"
+        android:textAlignment="center"
+        android:layout_below="@id/splash_process"
+        android:textStyle="italic"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:layout_centerHorizontal="true"/>
 </RelativeLayout>

@@ -1,37 +1,33 @@
 package com.beproject.group1.vta.activities
 
+import android.Manifest.permission.READ_CONTACTS
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.TargetApi
-import android.content.pm.PackageManager
-import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
 import android.app.LoaderManager.LoaderCallbacks
 import android.content.CursorLoader
 import android.content.Loader
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.support.design.widget.Snackbar
+import android.support.v7.app.AlertDialog
+import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.TextView
-
-import java.util.ArrayList
-import android.Manifest.permission.READ_CONTACTS
-import android.content.DialogInterface
-import android.support.v7.app.AlertDialog
-import android.util.Patterns
 import com.beproject.group1.vta.R
 import com.beproject.group1.vta.helpers.APIController
+import com.beproject.group1.vta.helpers.Validation
 import com.beproject.group1.vta.helpers.VolleyService
-
 import kotlinx.android.synthetic.main.activity_sign_up.*
 import org.json.JSONObject
+import java.util.*
 
 /**
  * A login screen that offers login via email/password.
@@ -155,14 +151,14 @@ class SignUpActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             email.error = getString(R.string.error_field_required)
             focusView = email
             cancel = true
-        } else if (!isEmailValid(emailStr)) {
+        } else if (!Validation.isEmailValid(emailStr)) {
             email.error = getString(R.string.error_invalid_email)
             focusView = email
             cancel = true
         }
         
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(passwordStr) && !isPasswordValid(passwordStr)) {
+        if (!TextUtils.isEmpty(passwordStr) && !Validation.isPasswordValid(passwordStr)) {
             password.error = getString(R.string.error_invalid_password)
             focusView = password
             cancel = true
@@ -210,15 +206,15 @@ class SignUpActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         }
     }
 
-    private fun isEmailValid(email: String): Boolean {
+    /*public fun isEmailValid(email: String): Boolean {
         //TODO: Replace this with your own logic
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
+    }*/
 
-    private fun isPasswordValid(password: String): Boolean {
+    /*public fun isPasswordValid(password: String): Boolean {
         //TODO: Replace this with your own logic
         return password.length > 4
-    }
+    }*/
 
     /**
      * Shows the progress UI and hides the login form.
