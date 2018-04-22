@@ -3,3 +3,7 @@ data
 __pycache__
 meta
 *.csv
+*.zip
+*.java
+*.json
+weka_models*

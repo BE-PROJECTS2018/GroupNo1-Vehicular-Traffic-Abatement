@@ -2,6 +2,7 @@ import json, glob
 from random import shuffle
 import tensorflow as tf
 from math import cos, sin
+import numpy as np
 from pyexcel_ods import get_data, save_data
 from collections import OrderedDict
 
@@ -109,3 +110,17 @@ def export_model(model, model_name, num_input):
     export_dir='meta/{}_export'.format(model_name)
     model.export_savedmodel(export_dir_base=export_dir, serving_input_receiver_fn=serving_input_receiver_fn)
     print('done')
+
+def confusion_matrix(labels, predicted):
+    # row is predicted as column
+    labels = np.array(labels)
+    predicted = np.array(predicted)
+    l1 = len(labels)
+    l2 = len(predicted)
+    n_classes = len(np.unique(labels))
+    if l1 != l2:
+        print('Error in confusion matrix')
+    cfmat = np.zeros((n_classes, n_classes),dtype=int)
+    for i in range(l1):
+        cfmat[labels[i]][predicted[i]] += 1
+    print('confusion matrix', cfmat, sep='\n')
